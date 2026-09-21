@@ -85,7 +85,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .form-card h2{font-size:15px;font-weight:700;color:var(--text);}
 .field{display:flex;flex-direction:column;gap:5px;}
 .field label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
-.field input,.field select{padding:10px 11px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;color:var(--text);background:var(--bg);transition:border-color .2s;}
+.field input,.field select{padding:10px 11px;border:1.5px solid var(--border);border-radius:8px;font-size:16px;font-family:inherit;color:var(--text);background:var(--bg);transition:border-color .2s;}
 .field input::placeholder{color:var(--muted2);}
 .field input:focus,.field select:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px rgba(34,197,94,.1);}
 .field select option{background:var(--surface);color:var(--text);}
@@ -131,6 +131,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .annual-table tr.saldo-row td.neg{color:var(--red);font-weight:700;}
 .btn-manage-hidden{background:none;border:1px dashed var(--muted2);border-radius:8px;color:var(--muted);font-size:12px;padding:10px;cursor:pointer;transition:all .2s;width:100%;margin-top:2px;}
 .btn-manage-hidden:hover{border-color:var(--green);color:var(--green);}
+/* GAS TOGGLE */
+.gas-toggle{display:flex;gap:8px;margin-top:0;}
+.gas-btn{flex:1;padding:10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--muted);font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;}
+.gas-btn.active{border-color:var(--green);color:var(--green);background:rgba(34,197,94,.08);}
+/* ENTRY CARD — layout melhorado para livre/weed/outros */
+.entry-card{background:var(--surface2);border-radius:8px;padding:10px 12px;margin-bottom:6px;display:flex;flex-direction:column;gap:5px;}
+.entry-card:last-of-type{margin-bottom:0;}
+.entry-card-top{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.entry-card-name{font-size:13px;font-weight:600;color:var(--text);flex:1;}
+.entry-card-value{font-size:15px;font-weight:700;color:#94a3b8;}
+.entry-card-bottom{display:flex;align-items:center;gap:6px;}
+.entry-card-date{font-size:11px;color:var(--muted);}
+.entry-card-parcela{font-size:10px;color:#a78bfa;font-weight:700;padding:1px 6px;border-radius:4px;background:rgba(167,139,250,.15);}
+.entry-card-type{font-size:10px;padding:2px 6px;border-radius:4px;font-weight:600;}
+.entry-card-actions{display:flex;gap:4px;margin-left:auto;}
+.entry-card-extra{font-size:11px;color:var(--muted);}
 .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;align-items:flex-end;justify-content:center;}
 .modal.active{display:flex;}
 .modal-inner{background:var(--surface);border:1px solid var(--border);padding:22px;border-radius:12px;max-width:360px;width:90%;margin-bottom:40px;}
@@ -170,7 +186,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   <h1>💰 Meus <span>Gastos</span></h1>
   <div class="header-right">
     <div class="sync-dot" id="syncDot" title="Status de sincronização"></div>
-    <button class="btn-eye-global" id="btnEyeGlobal" onclick="toggleValuesVisibility()">👁</button>
     <button class="btn-icon" onclick="exportData()">⬆ Exportar</button>
     <button class="btn-icon" onclick="openImportModal()">⬇ Importar</button>
   </div>
@@ -192,6 +207,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     <span class="year-label" id="yearLabel"></span>
     <button class="year-nav" onclick="changeYear(1)">›</button>
   </div>
+  <button class="btn-eye-global" id="btnEyeGlobal" onclick="toggleValuesVisibility()" title="Ocultar valores">👁</button>
 </div>
 
 <div class="tab-content active" id="tab-resumo">
@@ -211,6 +227,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     <div class="field" id="fieldSubcat" style="display:none"><label>Subcategoria</label><select id="fSubcategoria"></select></div>
     <div class="field" id="fieldSubcatLivre" style="display:none"><label>Descrição</label><input type="text" id="fSubcatLivre" placeholder="ex: Gelato, Pão de Açúcar..."></div>
     <div class="field" id="fieldParcela" style="display:none"><label>Parcela (ex: 2/3)</label><input type="text" id="fParcela" placeholder="ex: 1/3"></div>
+    <!-- GASOLINA EXTRA -->
+    <div id="fieldGasolinaVeiculo" style="display:none">
+      <label style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px;">Veículo</label>
+      <div class="gas-toggle">
+        <button type="button" class="gas-btn active" id="gasMotoBtn" onclick="selectVeiculo('moto')">🏍️ Moto</button>
+        <button type="button" class="gas-btn" id="gasCarroBtn" onclick="selectVeiculo('carro')">🚗 Carro</button>
+      </div>
+      <input type="hidden" id="fGasVeiculo" value="moto">
+    </div>
+    <div class="field" id="fieldGasolinaLitro" style="display:none">
+      <label>Preço por litro (R$)</label>
+      <input type="text" id="fGasLitro" placeholder="0,00" inputmode="numeric">
+    </div>
     <div class="field-row">
       <div class="field"><label>Data</label><input type="date" id="fData"></div>
       <div class="field"><label>Valor (R$)</label><input type="text" id="fValor" placeholder="0,00" inputmode="numeric"></div>
@@ -490,13 +519,27 @@ function onCategoriaChange(){
   document.getElementById('fieldSubcat').style.display='none';
   document.getElementById('fieldSubcatLivre').style.display='none';
   document.getElementById('fieldParcela').style.display='none';
+  document.getElementById('fieldGasolinaVeiculo').style.display='none';
+  document.getElementById('fieldGasolinaLitro').style.display='none';
   if(!cat)return;
+  if(catId==='gasolina'){
+    document.getElementById('fieldGasolinaVeiculo').style.display='block';
+    document.getElementById('fieldGasolinaLitro').style.display='flex';
+    setupMask('fGasLitro');
+    return;
+  }
   if(cat.sub.length>0){
     var sel=document.getElementById('fSubcategoria');sel.innerHTML='';
     cat.sub.forEach(function(s){var o=document.createElement('option');o.value=s;o.textContent=s;sel.appendChild(o);});
     document.getElementById('fieldSubcat').style.display='flex';
   }else if(cat.livre){document.getElementById('fieldSubcatLivre').style.display='flex';}
   if(cat.parcela)document.getElementById('fieldParcela').style.display='flex';
+}
+
+function selectVeiculo(v){
+  document.getElementById('fGasVeiculo').value=v;
+  document.getElementById('gasMotoBtn').classList.toggle('active',v==='moto');
+  document.getElementById('gasCarroBtn').classList.toggle('active',v==='carro');
 }
 
 async function addExpense(){
@@ -506,24 +549,36 @@ async function addExpense(){
   var tipo=document.getElementById('fTipo').value;
   var cat=CATEGORIES.find(function(c){return c.id===catId;});
   if(!catId||!date||value<=0){alert('Preencha todos os campos.');return;}
-  var sub=null;
-  if(cat.sub.length>0){sub=document.getElementById('fSubcategoria').value;}
-  else if(cat.livre){sub=document.getElementById('fSubcatLivre').value.trim();if(!sub){alert('Adicione uma descrição.');return;}}
-  var parcela=cat.parcela?document.getElementById('fParcela').value.trim():null;
+  var sub=null;var parcela=null;var gasLitro=null;
+  if(catId==='gasolina'){
+    sub=document.getElementById('fGasVeiculo').value;
+    gasLitro=parseVal(document.getElementById('fGasLitro').value)||null;
+  }else if(cat.sub.length>0){
+    sub=document.getElementById('fSubcategoria').value;
+  }else if(cat.livre){
+    sub=document.getElementById('fSubcatLivre').value.trim();
+    if(!sub){alert('Adicione uma descrição.');return;}
+  }
+  if(cat.parcela)parcela=document.getElementById('fParcela').value.trim()||null;
   var exp={id:Date.now(),categoryId:catId,subcategory:sub,parcela:parcela,date:date,value:value,type:tipo};
+  if(gasLitro)exp.gasLitro=gasLitro;
   expenses.push(exp);
   saveLocal();
   renderResume();
   // limpa form
   document.getElementById('fCategoria').value='';
   document.getElementById('fValor').value='';
+  document.getElementById('fGasLitro').value='';
   document.getElementById('fData').valueAsDate=new Date();
   document.getElementById('fTipo').value='debit';
   document.getElementById('fieldSubcat').style.display='none';
   document.getElementById('fieldSubcatLivre').style.display='none';
   document.getElementById('fieldParcela').style.display='none';
+  document.getElementById('fieldGasolinaVeiculo').style.display='none';
+  document.getElementById('fieldGasolinaLitro').style.display='none';
   document.getElementById('fSubcatLivre').value='';
   document.getElementById('fParcela').value='';
+  selectVeiculo('moto');
   // salva na nuvem
   setSyncDot('syncing');
   try { await saveExpenseToDB(exp); setSyncDot('ok'); } catch(e) { setSyncDot('err'); }
@@ -618,17 +673,28 @@ function renderResume(){
         html+='<div class="sub-total-row"><span>Total '+sub+'</span><span>'+fBRL(subTotal)+'</span></div>';
         sec.innerHTML=html;det.appendChild(sec);
       });
-    }else if(cat.livre||cat.parcela){
-      var groups={};
-      catExp.forEach(function(e){var k=e.subcategory||'—';if(!groups[k])groups[k]=[];groups[k].push(e);});
-      Object.keys(groups).forEach(function(sn){
-        var se=groups[sn];var st=se.reduce(function(s,e){return s+e.value;},0);
+    }else if(cat.id==='gasolina'){
+      // gasolina: agrupa por veículo (moto/carro)
+      var veiculos=['moto','carro'];
+      veiculos.forEach(function(v){
+        var vExp=catExp.filter(function(e){return e.subcategory===v;});
+        if(!vExp.length)return;
+        var vTotal=vExp.reduce(function(s,e){return s+e.value;},0);
         var sec=document.createElement('div');sec.className='subcategory-section';
-        var html='<div class="subcategory-title">'+sn+'</div>';
-        se.forEach(function(e){html+=entryHTML(e,true);});
-        if(se.length>1)html+='<div class="sub-total-row"><span>Total '+sn+'</span><span>'+fBRL(st)+'</span></div>';
+        var vLabel=v==='moto'?'🏍️ Moto':'🚗 Carro';
+        var html='<div class="subcategory-title">'+vLabel+'</div>';
+        vExp.forEach(function(e){html+=entryHTML(e,false);});
+        html+='<div class="sub-total-row"><span>Total '+vLabel+'</span><span>'+fBRL(vTotal)+'</span></div>';
         sec.innerHTML=html;det.appendChild(sec);
       });
+      // entradas sem veículo definido
+      var semV=catExp.filter(function(e){return e.subcategory!=='moto'&&e.subcategory!=='carro';});
+      semV.forEach(function(e){var d=document.createElement('div');d.innerHTML=entryHTML(e,false);det.appendChild(d.firstChild);});
+    }else if(cat.livre||cat.parcela){
+      // layout card para weed, outros, alimentação, cartão-terceiros
+      catExp.forEach(function(e){var d=document.createElement('div');d.innerHTML=entryHTML(e,true);det.appendChild(d.firstChild);});
+      var total=catExp.reduce(function(s,e){return s+e.value;},0);
+      if(catExp.length>1){var tr=document.createElement('div');tr.className='sub-total-row';tr.innerHTML='<span>Total</span><span>'+fBRL(total)+'</span>';det.appendChild(tr);}
     }else{
       catExp.forEach(function(e){var d=document.createElement('div');d.innerHTML=entryHTML(e,false);det.appendChild(d.firstChild);});
     }
@@ -642,16 +708,41 @@ function renderResume(){
   }else{btnH.style.display='none';showingHidden=false;}
 }
 
-function entryHTML(e,hideDesc){
-  var isFixed=CATEGORIES.find(function(c){return c.id===e.categoryId&&c.sub.indexOf(e.subcategory)>=0;});
+function entryHTML(e, useCardLayout){
+  var typeClass=e.type==='card'?'type-card':'type-debit';
+  var typeLabel=e.type==='card'?'Crédito':'Débito';
+  var actions='<button class="btn-edit-entry" onclick="openEditModal('+e.id+')">✏️</button><button class="btn-del" onclick="deleteExpense('+e.id+')">✕</button>';
+
+  if(useCardLayout){
+    // layout card para weed, outros, alimentação, cartão-terceiros
+    var name=e.subcategory||'—';
+    var extra='';
+    if(e.parcela) extra='<span class="entry-card-parcela">'+e.parcela+'</span>';
+    if(e.gasLitro) extra='<span class="entry-card-extra">⛽ R$'+e.gasLitro.toFixed(2).replace('.',',')+'/L</span>';
+    return '<div class="entry-card">'+
+      '<div class="entry-card-top">'+
+        '<span class="entry-card-name">'+name+'</span>'+
+        '<span class="entry-card-value">'+fBRL(e.value)+'</span>'+
+      '</div>'+
+      '<div class="entry-card-bottom">'+
+        '<span class="entry-card-date">'+fDate(e.date)+'</span>'+
+        extra+
+        '<span class="entry-card-type '+typeClass+'">'+typeLabel+'</span>'+
+        '<span class="entry-card-actions">'+actions+'</span>'+
+      '</div>'+
+    '</div>';
+  }
+
+  // layout linha padrão (subcategorias fixas, gasolina com veículo)
+  var extra='';
+  if(e.gasLitro) extra='<span class="entry-desc">⛽ R$'+e.gasLitro.toFixed(2).replace('.',',')+'/L</span>';
   return '<div class="expense-entry">'+
     '<span class="entry-date">'+fDate(e.date)+'</span>'+
-    (!hideDesc&&e.subcategory&&!isFixed?'<span class="entry-desc">'+e.subcategory+'</span>':'')+
+    extra+
     (e.parcela?'<span class="entry-parcela">'+e.parcela+'</span>':'')+
-    '<span class="entry-type '+(e.type==='card'?'type-card':'type-debit')+'">'+(e.type==='card'?'Crédito':'Débito')+'</span>'+
+    '<span class="entry-type '+typeClass+'">'+typeLabel+'</span>'+
     '<span class="entry-value">'+fBRL(e.value)+'</span>'+
-    '<button class="btn-edit-entry" onclick="openEditModal('+e.id+')">✏️</button>'+
-    '<button class="btn-del" onclick="deleteExpense('+e.id+')">✕</button>'+
+    actions+
     '</div>';
 }
 
