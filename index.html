@@ -1,0 +1,2334 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0f1117">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Gastos">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Controle Financeiro</title>
+<style>
+:root{--bg:#0f1117;--surface:#1a1d27;--surface2:#22263a;--border:rgba(255,255,255,0.07);--green:#22c55e;--red:#ef4444;--text:#e8eaf0;--muted:#6b7280;--muted2:#374151;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);max-width:600px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;color:var(--text);padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);}
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:13px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
+.header h1{font-size:clamp(16px,4.5vw,19px);font-weight:700;color:var(--text);white-space:nowrap;}
+.header h1 span{color:var(--green);}
+.header-right{display:flex;align-items:center;gap:8px;}
+.btn-eye-global{background:none;border:none;cursor:pointer;font-size:18px;color:var(--muted);padding:4px;}
+.btn-icon{background:var(--surface2);color:var(--muted);border:1px solid var(--border);border-radius:6px;padding:6px 11px;font-size:12px;cursor:pointer;transition:all .2s;}
+.btn-icon:hover{color:var(--text);border-color:var(--green);}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--muted2);flex-shrink:0;transition:background .3s;}
+.sync-dot.ok{background:var(--green);}
+.sync-dot.syncing{background:#fbbf24;animation:pulse .8s infinite;}
+.sync-dot.err{background:var(--red);}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+.tabs{display:flex;background:var(--surface);border-bottom:1px solid var(--border);overflow-x:auto;}
+.tab-button{flex:1;min-width:70px;padding:11px 6px;border:none;background:none;cursor:pointer;font-size:12px;font-weight:500;color:var(--muted);border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap;}
+.tab-button.active{color:var(--green);border-bottom-color:var(--green);}
+.month-bar{background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 8px;height:48px;gap:4px;}
+.month-nav{background:none;border:none;font-size:22px;cursor:pointer;color:var(--muted);padding:5px 9px;border-radius:7px;line-height:1;flex-shrink:0;transition:all .15s;}
+.month-nav:hover{background:var(--surface2);color:var(--green);}
+.month-label{font-size:15px;font-weight:700;color:var(--text);text-align:center;flex:1;user-select:none;}
+.year-selector{display:flex;align-items:center;gap:3px;flex-shrink:0;}
+.year-nav{background:none;border:none;font-size:14px;cursor:pointer;color:var(--muted);padding:4px 6px;border-radius:6px;}
+.year-nav:hover{color:var(--green);}
+.year-label{font-size:13px;font-weight:600;color:var(--muted);min-width:36px;text-align:center;}
+.tab-content{display:none;flex:1;padding:13px;flex-direction:column;gap:10px;overflow-y:auto;}
+.tab-content.active{display:flex;}
+.summary-top{display:flex;gap:7px;margin-bottom:7px;}
+.planning-section{margin:4px 0 14px;}
+.planning-title{font-size:15px;font-weight:600;color:var(--text);margin:0 0 8px;}
+.planning-group{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 13px;margin-bottom:8px;}
+.planning-group-header{display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:600;color:var(--text);}
+.plan-item{padding:8px 0;border-bottom:1px solid var(--border);}
+.plan-item:last-of-type{border-bottom:none;}
+.plan-item-top{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.plan-item-name{font-size:14px;color:var(--text);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.plan-item-add{font-size:11px;color:#a78bfa;font-weight:600;flex-shrink:0;}
+.plan-item-fields{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-top:5px;}
+.plan-input.plan-desc{flex:1 1 100%;}
+.plan-input{flex:1;min-width:0;padding:6px 8px;border:1.5px solid var(--border);border-radius:6px;font-size:16px;font-family:inherit;color:var(--text);background:var(--bg);}
+.plan-input:focus{outline:none;border-color:var(--green);}
+.plan-val{flex:0 0 105px;text-align:right;}
+.plan-status{font-size:12px;font-weight:600;color:var(--muted);flex-shrink:0;}
+.plan-status.proj{color:#a78bfa;}
+.btn-proj{background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.35);color:#a78bfa;border-radius:6px;padding:5px 9px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;margin-left:auto;}
+.btn-proj:hover{background:rgba(167,139,250,.22);}
+.btn-proj-remove{background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.28);color:#f28b8b;border-radius:7px;min-height:36px;padding:7px 10px;font-size:11px;cursor:pointer;white-space:nowrap;margin-left:6px;}
+.btn-proj-remove:hover{color:#fca5a5;border-color:rgba(239,68,68,.5);background:rgba(239,68,68,.12);}
+.plan-row-proj .entry-value{color:#a78bfa;}
+.cat-proj{color:#a78bfa;font-size:12px;font-weight:600;}
+.btn-plan-new{width:100%;margin-top:9px;min-height:40px;padding:9px 12px;border:1px solid rgba(167,139,250,.28);border-radius:9px;background:rgba(167,139,250,.10);color:#b9a4ff;font-size:12px;font-weight:650;cursor:pointer;transition:background .15s,border-color .15s,transform .08s;}
+.btn-plan-new:hover{background:rgba(167,139,250,.16);border-color:rgba(167,139,250,.4);}.btn-plan-new:active{transform:scale(.985);background:rgba(167,139,250,.2);}
+.plan-action-row{display:flex;gap:8px;margin-top:10px}.plan-action-row .btn-plan-new{width:50%;margin-top:0}.btn-expense-new{border-color:rgba(52,211,153,.28);background:rgba(52,211,153,.10);color:#5ee6ad}.btn-expense-new:hover{background:rgba(52,211,153,.16);border-color:rgba(52,211,153,.4)}.btn-expense-new:active{background:rgba(52,211,153,.2)}
+.mini-card{flex:1;min-width:0;position:relative;overflow:hidden;border-radius:12px;padding:12px 11px;border:1px solid var(--border);box-shadow:0 1px 3px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.02);}
+.mini-card .icon{position:absolute;top:8px;right:9px;font-size:12px;opacity:.4;line-height:1;}
+.mini-card .label{font-size:11.5px;text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px;font-weight:700;opacity:.9;}
+.mini-card .value{font-size:clamp(12px,4vw,17px);font-weight:800;letter-spacing:-.3px;line-height:1.2;overflow-wrap:break-word;word-break:break-word;}
+.card-gasto{background:linear-gradient(155deg,rgba(239,68,68,.11),rgba(239,68,68,.03));border-color:rgba(239,68,68,.22);}
+.card-gasto .label{color:#fca5a5;}.card-gasto .value{color:#f87171;}
+.card-entrada{background:linear-gradient(155deg,rgba(34,197,94,.11),rgba(34,197,94,.03));border-color:rgba(34,197,94,.22);}
+.card-entrada .label{color:#86efac;}.card-entrada .value{color:#4ade80;}
+.card-saldo{background:linear-gradient(155deg,var(--surface2),rgba(255,255,255,.015));border-color:var(--border);}
+.card-saldo .label{color:var(--muted);}.card-saldo .value{color:var(--text);}
+.card-saldo.positivo{background:linear-gradient(155deg,rgba(34,197,94,.15),rgba(34,197,94,.04));border-color:rgba(34,197,94,.32);}.card-saldo.positivo .value{color:#4ade80;}
+.card-saldo.negativo{background:linear-gradient(155deg,rgba(239,68,68,.15),rgba(239,68,68,.04));border-color:rgba(239,68,68,.32);}.card-saldo.negativo .value{color:#f87171;}
+.card-saldo-projetado,.card-saldo-projetado.positivo,.card-saldo-projetado.negativo{background:linear-gradient(155deg,var(--surface2),rgba(255,255,255,.015));border-color:var(--border);}
+.card-saldo-projetado .label,.card-saldo-projetado .value{color:var(--text);}.card-saldo-projetado.positivo .label,.card-saldo-projetado.positivo .value{color:#4ade80;}.card-saldo-projetado.negativo .label,.card-saldo-projetado.negativo .value{color:#f87171;}
+.saldo-status-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--muted2);margin-left:4px;vertical-align:1px;}
+.saldo-status-dot.positivo{background:var(--green);}.saldo-status-dot.negativo{background:var(--red);}
+.category-list{display:flex;flex-direction:column;gap:5px;}
+.category-item{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.category-item.cat-force-show{opacity:.45;}
+.category-header{display:flex;align-items:center;padding:12px 13px;cursor:pointer;user-select:none;transition:background .15s;gap:9px;}
+.category-header:hover{background:var(--surface2);}
+.cat-emoji{font-size:17px;flex-shrink:0;}
+.cat-name{flex:1;font-size:15px;font-weight:600;color:var(--text);}
+.cat-total{font-size:14px;font-weight:600;color:#94a3b8;}
+.cat-total.zero{color:var(--muted2);font-weight:400;font-size:13px;}
+.cat-chevron{font-size:10px;color:var(--muted);transition:transform .2s;flex-shrink:0;}
+.category-item.open .cat-chevron{transform:rotate(180deg);color:var(--green);}
+.btn-reactivate-category{flex-shrink:0;min-height:32px;padding:5px 9px;border:1px solid rgba(52,211,153,.3);border-radius:7px;background:rgba(52,211,153,.08);color:#5ee6ad;font-size:11px;font-weight:650;cursor:pointer}.btn-reactivate-category:hover{background:rgba(52,211,153,.14)}
+.btn-hide-category{display:block;margin:14px auto 1px;padding:6px 10px;border:1px solid var(--border);border-radius:7px;background:transparent;color:var(--muted);font-size:11px;font-weight:600;cursor:pointer;transition:all .15s}.btn-hide-category:hover{color:var(--text);background:var(--surface2);border-color:rgba(255,255,255,.12)}
+.category-details{display:none;border-top:1px solid var(--border);padding:4px 13px 11px;background:var(--bg);}
+.category-item.open .category-details{display:block;}
+.subcategory-section{margin-top:9px;}
+.detail-section-title{font-size:11px;font-weight:800;color:#8b93a3;text-transform:uppercase;letter-spacing:.8px;margin:12px 0 7px;padding-top:10px;border-top:1px solid var(--border);}
+.category-details>.detail-section-title:first-child{border-top:none;padding-top:2px;margin-top:5px;}
+.plan-section{margin-top:14px;padding-top:2px;}
+.entry-row.grouped-entry .entry-row-top{align-items:center;}
+.entry-row.grouped-entry .entry-name{font-weight:500;color:#c3c8d2;}
+.entry-row.grouped-entry .entry-row-bottom{justify-content:flex-end;}
+.subcategory-title{font-size:12px;font-weight:750;color:#b5bbc7;text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px;padding-bottom:3px;border-bottom:1px solid var(--border);}
+.btn-del{display:inline-flex;align-items:center;justify-content:center;min-width:36px;height:36px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--muted);cursor:pointer;font-size:15px;padding:0 8px;transition:all .15s;}
+.btn-del:hover{color:var(--text);border-color:rgba(255,255,255,.14);}.btn-del-danger{color:#f28b8b;border-color:rgba(239,68,68,.25);background:rgba(239,68,68,.06)}.btn-del-danger:hover{color:#fca5a5;border-color:rgba(239,68,68,.48);background:rgba(239,68,68,.12)}
+.btn-edit-entry{background:none;border:none;color:var(--muted2);cursor:pointer;font-size:12px;padding:2px 4px;transition:color .15s;}
+.btn-edit-entry:hover{color:#60a5fa;}
+.sub-total-row{display:flex;justify-content:space-between;padding:6px 0 2px;font-size:12px;color:#64748b;font-weight:600;border-top:1px dashed var(--border);margin-top:3px;}
+.empty-cat{font-size:12px;color:var(--muted2);padding:9px 0;text-align:center;}
+.form-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:13px;}
+.form-card h2{font-size:15px;font-weight:700;color:var(--text);}
+.field{display:flex;flex-direction:column;gap:5px;}
+.field label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+.field input,.field select{padding:10px 11px;border:1.5px solid var(--border);border-radius:8px;font-size:16px;font-family:inherit;color:var(--text);background:var(--bg);transition:border-color .2s;}
+.field input::placeholder{color:var(--muted2);}
+.field input:focus,.field select:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px rgba(34,197,94,.1);}
+.field select option{background:var(--surface);color:var(--text);}
+.field-row{display:flex;gap:9px;}
+.field-row .field{flex:1;}
+.btn-add{background:var(--green);color:#0f1117;border:none;border-radius:8px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;}
+.btn-add:hover{background:#16a34a;}
+.btn-add.entrada-btn{background:#3b82f6;color:white;}
+.income-section{display:flex;flex-direction:column;gap:6px;}
+.income-item{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.income-item-header{display:flex;align-items:center;padding:12px 13px;cursor:pointer;gap:9px;transition:background .15s;}
+.income-item-header:hover{background:var(--surface2);}
+.income-emoji{font-size:17px;flex-shrink:0;}
+.income-name{flex:1;font-size:14px;font-weight:500;color:var(--text);}
+.income-total{font-size:14px;font-weight:700;color:var(--green);}
+.income-chevron{font-size:10px;color:var(--muted);transition:transform .2s;}
+.income-item.open .income-chevron{transform:rotate(180deg);color:var(--green);}
+.income-details{display:none;border-top:1px solid var(--border);padding:4px 13px 11px;background:var(--bg);}
+.income-item.open .income-details{display:block;}
+.income-entry{display:flex;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);gap:7px;}
+.income-entry:last-of-type{border-bottom:none;}
+.income-entry-date{font-size:12px;color:var(--muted);min-width:38px;}
+.income-entry-desc{font-size:12px;color:var(--muted);flex:1;font-style:italic;}
+.income-entry-value{font-size:14px;font-weight:600;color:var(--green);}
+.annual-controls{display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 13px;}
+.annual-controls span{font-size:15px;font-weight:700;color:var(--text);}
+.annual-nav{background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);padding:4px 9px;border-radius:6px;transition:all .15s;}
+.annual-nav:hover{color:var(--green);background:var(--surface2);}
+.annual-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--border);}
+.annual-table{width:100%;border-collapse:collapse;font-size:12px;min-width:520px;}
+.annual-table th{background:var(--surface2);color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:8px 7px;text-align:right;border-bottom:1px solid var(--border);white-space:nowrap;}
+.annual-table th:first-child{text-align:left;position:sticky;left:0;background:var(--surface2);z-index:2;}
+.annual-table td{padding:8px 7px;border-bottom:1px solid var(--border);text-align:right;color:var(--muted);white-space:nowrap;}
+.annual-table td:first-child{text-align:left;color:var(--text);font-weight:500;position:sticky;left:0;background:var(--surface);z-index:1;}
+.annual-table tr:hover td{background:var(--surface2);}
+.annual-table tr:hover td:first-child{background:var(--surface2);}
+.annual-table td.has-val{color:var(--red);font-weight:600;}
+.annual-table td.inc-val{color:var(--green);font-weight:600;}
+.annual-table tr.tot-row td{border-top:2px solid var(--border);background:var(--surface2);font-weight:700;color:var(--text);}
+.annual-table tr.tot-row td:first-child{background:var(--surface2);}
+.annual-table tr.div-row td{background:var(--surface2);color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:5px 7px;}
+.annual-table tr.saldo-row td.pos{color:var(--green);font-weight:700;}
+.annual-table tr.saldo-row td.neg{color:var(--red);font-weight:700;}
+.btn-manage-hidden{background:none;border:1px dashed var(--muted2);border-radius:8px;color:var(--muted);font-size:12px;padding:10px;cursor:pointer;transition:all .2s;width:100%;margin-top:2px;}
+.btn-manage-hidden:hover{border-color:var(--green);color:var(--green);}
+/* GAS TOGGLE */
+.gas-toggle{display:flex;gap:8px;margin-top:0;}
+.gas-btn{flex:1;padding:10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--muted);font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;}
+.gas-btn.active{border-color:var(--green);color:var(--green);background:rgba(34,197,94,.08);}
+/* ENTRY ROW — layout único, estilo extrato/lista, usado em todas as categorias */
+.entry-row{padding:6px 0;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:2px;}
+.entry-row:last-of-type{border-bottom:none;}
+.entry-row-top{display:flex;align-items:baseline;justify-content:space-between;gap:8px;}
+.entry-name{font-size:14px;color:var(--text);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.entry-value{font-size:14px;font-weight:700;color:#d4d8e1;flex-shrink:0;}
+.entry-row-bottom{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.entry-meta{font-size:12px;color:#858d9c;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;}
+.entry-actions{display:flex;gap:2px;flex-shrink:0;}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:1000;align-items:center;justify-content:center;padding:max(16px,env(safe-area-inset-top)) 14px max(16px,env(safe-area-inset-bottom));}
+.modal.active{display:flex;}
+.modal-inner{background:var(--surface);border:1px solid var(--border);padding:22px;border-radius:16px;max-width:360px;width:min(100%,360px);max-height:min(86vh,720px);overflow-y:auto;overscroll-behavior:contain;box-shadow:0 18px 55px rgba(0,0,0,.45);}
+.modal-title{font-size:15px;font-weight:700;margin-bottom:13px;color:var(--text);}
+.modal-btns{display:flex;gap:9px;justify-content:flex-end;margin-top:16px;}
+.modal-btns button{padding:8px 17px;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;}
+.btn-cancel{background:var(--surface2);color:var(--muted);}
+.btn-confirm{background:var(--green);color:#0f1117;}
+.modal-inner input[type=file]{color:var(--muted);font-size:13px;}
+.sheet-modal{background:var(--surface);border:1px solid var(--border);border-top:2px solid var(--green);padding:18px;border-radius:16px;width:min(100%,520px);max-height:min(86vh,760px);overflow-y:auto;overscroll-behavior:contain;box-shadow:0 18px 55px rgba(0,0,0,.45);}
+.sheet-title{font-size:14px;font-weight:700;color:var(--green);margin-bottom:14px;text-align:center;}
+.sheet-fields{display:flex;flex-direction:column;gap:11px;}
+.sheet-row{display:flex;gap:9px;}
+.sheet-row .field{flex:1;}
+.sheet-actions{display:flex;gap:9px;margin-top:14px;}
+.sheet-actions button{flex:1;padding:11px;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;}
+.btn-save{background:var(--green);color:#0f1117;}
+.btn-cancel-sheet{background:var(--surface2);color:var(--muted);}
+.loading-screen{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:9999;transition:opacity .3s;}
+.loading-screen.done{opacity:0;pointer-events:none;}
+.loading-spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-text{font-size:14px;color:var(--muted);}
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--surface2);border-radius:3px;}
+</style>
+</head>
+<body>
+
+<div class="loading-screen" id="loadingScreen">
+  <div class="loading-spinner"></div>
+  <div class="loading-text" id="loadingText">Conectando ao banco de dados...</div>
+</div>
+
+<div class="header">
+  <h1>💰 Meus <span>Gastos</span></h1>
+  <div class="header-right">
+    <div class="sync-dot" id="syncDot" title="Status de sincronização"></div>
+    <button class="btn-icon" onclick="exportData()">⬆ Exportar</button>
+    <button class="btn-icon" onclick="openImportModal()">⬇ Importar</button>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab-button active" onclick="switchTab(0)">Resumo</button>
+  <button class="tab-button" onclick="switchTab(1)">+ Adicionar</button>
+  <button class="tab-button" onclick="switchTab(2)">Entradas</button>
+  <button class="tab-button" onclick="switchTab(3)">Anual</button>
+</div>
+
+<div class="month-bar" id="monthBar">
+  <button class="month-nav" onclick="changeMonth(-1)">‹</button>
+  <span class="month-label" id="monthLabel"></span>
+  <button class="month-nav" onclick="changeMonth(1)">›</button>
+  <div class="year-selector">
+    <button class="year-nav" onclick="changeYear(-1)">‹</button>
+    <span class="year-label" id="yearLabel"></span>
+    <button class="year-nav" onclick="changeYear(1)">›</button>
+  </div>
+  <button class="btn-eye-global" id="btnEyeGlobal" onclick="toggleValuesVisibility()" title="Ocultar valores">👁</button>
+</div>
+
+<div class="tab-content active" id="tab-resumo">
+  <div class="summary-top">
+    <div class="mini-card card-entrada"><span class="icon">↑</span><div class="label">Entradas</div><div class="value" id="resumoEntrada">—</div></div>
+    <div class="mini-card card-gasto"><span class="icon">↓</span><div class="label">Gastos</div><div class="value" id="resumoGasto">—</div></div>
+    <div class="mini-card card-saldo" id="cardSaldo"><span class="icon">=</span><div class="label">Saldo</div><div class="value" id="resumoSaldo">—</div></div>
+  </div>
+  <div class="summary-top">
+    <div class="mini-card card-saldo card-saldo-projetado" id="cardSaldoProjetado"><span class="icon">🧪</span><div class="label">Saldo projetado <span class="saldo-status-dot" id="saldoProjetadoDot"></span></div><div class="value" id="resumoSaldoProjetado">—</div></div>
+  </div>
+
+  <!-- Formulário de simulação mantido apenas oculto nesta etapa (o JS ainda o referencia). -->
+  <div id="simFormHidden" style="display:none" aria-hidden="true">
+      <div class="field" style="margin-top:8px"><label>Tipo</label>
+        <select id="simTipo" onchange="onSimTipoChange()">
+          <option value="gasto">Gasto hipotético</option>
+          <option value="entrada">Entrada hipotética</option>
+        </select>
+      </div>
+
+      <div id="simGastoFields">
+        <div class="field"><label>Categoria</label><select id="simCategoria" onchange="onSimCategoriaChange()"><option value="">Selecione...</option></select></div>
+        <div class="field" id="simFieldSubcat" style="display:none"><label>Subcategoria</label><select id="simSubcategoria"></select></div>
+        <div class="field" id="simFieldSubcatLivre" style="display:none"><label>Descrição</label><input type="text" id="simSubcatLivre" placeholder="ex: Gelato, Pão de Açúcar..."></div>
+        <div class="field" id="simFieldParcela" style="display:none"><label>Parcela (ex: 2/3)</label><input type="text" id="simParcela" placeholder="ex: 1/3"></div>
+        <div id="simFieldFinanciamentoItem" style="display:none">
+          <label style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px;">Item financiado</label>
+          <div class="gas-toggle">
+            <button type="button" class="gas-btn active" id="simFinancMotoBtn" onclick="selectSimFinanciamentoItem('moto')">🏍️ Moto</button>
+            <button type="button" class="gas-btn" id="simFinancCarroBtn" onclick="selectSimFinanciamentoItem('carro')">🚗 Carro</button>
+            <button type="button" class="gas-btn" id="simFinancCasaBtn" onclick="selectSimFinanciamentoItem('casa')">🏠 Casa</button>
+          </div>
+          <input type="hidden" id="simFinanciamentoItem" value="moto">
+        </div>
+        <div id="simFieldSeguroVeiculo" style="display:none">
+          <label style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px;">Veículo</label>
+          <div class="gas-toggle">
+            <button type="button" class="gas-btn active" id="simSeguroMotoBtn" onclick="selectSimSeguroVeiculo('moto')">🏍️ Moto</button>
+            <button type="button" class="gas-btn" id="simSeguroCarroBtn" onclick="selectSimSeguroVeiculo('carro')">🚗 Carro</button>
+          </div>
+          <input type="hidden" id="simSeguroVeiculo" value="moto">
+        </div>
+        <div class="field" id="simFieldCasaSub" style="display:none">
+          <label>Subcategoria</label>
+          <select id="simCasaSub" onchange="onSimCasaSubChange()">
+            <option value="Energia">⚡ Energia</option>
+            <option value="Água">🚰 Água</option>
+            <option value="Internet">🌐 Internet</option>
+            <option value="Condomínio">🏢 Condomínio</option>
+            <option value="Utilidades">🧴 Utilidades</option>
+          </select>
+        </div>
+        <div class="field" id="simFieldCasaDesc" style="display:none">
+          <label>Descrição</label>
+          <input type="text" id="simCasaDesc" placeholder="ex: Garrafão de água, Gás de cozinha...">
+        </div>
+        <div id="simFieldGasolinaVeiculo" style="display:none">
+          <label style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px;">Veículo</label>
+          <div class="gas-toggle">
+            <button type="button" class="gas-btn active" id="simGasMotoBtn" onclick="selectSimVeiculo('moto')">🏍️ Moto</button>
+            <button type="button" class="gas-btn" id="simGasCarroBtn" onclick="selectSimVeiculo('carro')">🚗 Carro</button>
+          </div>
+          <input type="hidden" id="simGasVeiculo" value="moto">
+        </div>
+        <div class="field" id="simFieldGasolinaLitro" style="display:none">
+          <label>Preço por litro (R$)</label>
+          <input type="text" id="simGasLitro" placeholder="0,00" inputmode="numeric">
+        </div>
+        <div id="simFieldManutVeiculo" style="display:none">
+          <label style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px;">Veículo</label>
+          <div class="gas-toggle">
+            <button type="button" class="gas-btn active" id="simManutMotoBtn" onclick="selectSimManutVeiculo('moto')">🏍️ Moto</button>
+            <button type="button" class="gas-btn" id="simManutCarroBtn" onclick="selectSimManutVeiculo('carro')">🚗 Carro</button>
+          </div>
+          <input type="hidden" id="simManutVeiculo" value="moto">
+        </div>
+        <div class="field" id="simFieldManutServico" style="display:none">
+          <label>O que foi feito?</label>
+          <input type="text" id="simManutServico" placeholder="ex: Troca de óleo, Revisão, Freios...">
+        </div>
+        <div class="field" id="simFieldManutOrigem" style="display:none">
+          <label>Origem do pagamento</label>
+          <select id="simManutOrigem">
+            <option value="mes">💵 Dinheiro do mês</option>
+            <option value="reserva">🏦 Reserva de emergência</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="simEntradaFields" style="display:none">
+        <div class="field"><label>Descrição</label><input type="text" id="simDesc" placeholder="ex: Freelance extra"></div>
+      </div>
+
+      <div class="field"><label>Valor (R$)</label><input type="text" id="simValor" placeholder="0,00" inputmode="numeric"></div>
+      <button class="btn-add" onclick="addSimEntry()">+ Adicionar à simulação</button>
+      <button class="btn-manage-hidden" onclick="clearSimulacao()">🧹 Limpar simulação</button>
+    </div>
+
+  <div class="category-list" id="categoryList"></div>
+  <button class="btn-manage-hidden" id="btnManageHidden" onclick="toggleShowHidden()" style="display:none">👁 Gerenciar categorias ocultas</button>
+</div>
+
+<div class="tab-content" id="tab-adicionar">
+  <div class="form-card">
+    <h2>Novo gasto</h2>
+    <div class="field"><label>Categoria</label><select id="fCategoria" onchange="onCategoriaChange()"><option value="">Selecione...</option></select></div>
+    <div class="field" id="fieldSubcat" style="display:none"><label>Subcategoria</label><select id="fSubcategoria"></select></div>
+    <div class="field" id="fieldSubcatLivre" style="display:none"><label>Descrição</label><input type="text" id="fSubcatLivre" placeholder="ex: Gelato, Pão de Açúcar..."></div>
+    <div class="field" id="fieldParcela" style="display:none"><label>Parcela (ex: 2/3)</label><input type="text" id="fParcela" placeholder="ex: 1/3"></div>
+    <!-- FINANCIAMENTO EXTRA -->
+    <div id="fieldFinanciamentoItem" style="display:none">
+      <label style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px;">Item financiado</label>
+      <div class="gas-toggle">
+        <button type="button" class="gas-btn active" id="financMotoBtn" onclick="selectFinanciamentoItem('moto')">🏍️ Moto</button>
+        <button type="button" class="gas-btn" id="financCarroBtn" onclick="selectFinanciamentoItem('carro')">🚗 Carro</button>
+        <button type="button" class="gas-btn" id="financCasaBtn" onclick="selectFinanciamentoItem('casa')">🏠 Casa</button>
+      </div>
+      <input type="hidden" id="fFinanciamentoItem" value="moto">
+    </div>
+    <!-- SEGURO EXTRA -->
+    <div id="fieldSeguroVeiculo" style="display:none">
+      <label style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px;">Veículo</label>
+      <div class="gas-toggle">
+        <button type="button" class="gas-btn active" id="seguroMotoBtn" onclick="selectSeguroVeiculo('moto')">🏍️ Moto</button>
+        <button type="button" class="gas-btn" id="seguroCarroBtn" onclick="selectSeguroVeiculo('carro')">🚗 Carro</button>
+      </div>
+      <input type="hidden" id="fSeguroVeiculo" value="moto">
+    </div>
+    <!-- CASA -->
+    <div class="field" id="fieldCasaSub" style="display:none">
+      <label>Subcategoria</label>
+      <select id="fCasaSub" onchange="onCasaSubChange()">
+        <option value="Energia">⚡ Energia</option>
+        <option value="Água">🚰 Água</option>
+        <option value="Internet">🌐 Internet</option>
+        <option value="Condomínio">🏢 Condomínio</option>
+        <option value="Utilidades">🧴 Utilidades</option>
+      </select>
+    </div>
+    <div class="field" id="fieldCasaDesc" style="display:none">
+      <label>Descrição</label>
+      <input type="text" id="fCasaDesc" placeholder="ex: Garrafão de água, Gás de cozinha...">
+    </div>
+    <!-- GASOLINA EXTRA -->
+    <div id="fieldGasolinaVeiculo" style="display:none">
+      <label style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px;">Veículo</label>
+      <div class="gas-toggle">
+        <button type="button" class="gas-btn active" id="gasMotoBtn" onclick="selectVeiculo('moto')">🏍️ Moto</button>
+        <button type="button" class="gas-btn" id="gasCarroBtn" onclick="selectVeiculo('carro')">🚗 Carro</button>
+      </div>
+      <input type="hidden" id="fGasVeiculo" value="moto">
+    </div>
+    <div class="field" id="fieldGasolinaLitro" style="display:none">
+      <label>Preço por litro (R$)</label>
+      <input type="text" id="fGasLitro" placeholder="0,00" inputmode="numeric">
+    </div>
+    <!-- MANUTENÇÃO EXTRA -->
+    <div id="fieldManutVeiculo" style="display:none">
+      <label style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px;">Veículo</label>
+      <div class="gas-toggle">
+        <button type="button" class="gas-btn active" id="manutMotoBtn" onclick="selectManutVeiculo('moto')">🏍️ Moto</button>
+        <button type="button" class="gas-btn" id="manutCarroBtn" onclick="selectManutVeiculo('carro')">🚗 Carro</button>
+      </div>
+      <input type="hidden" id="fManutVeiculo" value="moto">
+    </div>
+    <div class="field" id="fieldManutServico" style="display:none">
+      <label>O que foi feito?</label>
+      <input type="text" id="fManutServico" placeholder="ex: Troca de óleo, Revisão, Freios...">
+    </div>
+    <div class="field" id="fieldManutOrigem" style="display:none">
+      <label>Origem do pagamento</label>
+      <select id="fManutOrigem">
+        <option value="mes">💵 Dinheiro do mês</option>
+        <option value="reserva">🏦 Reserva de emergência</option>
+      </select>
+    </div>
+    <div class="field" id="fieldReservaSub" style="display:none"><label>Tipo de reserva</label><select id="fReservaSub"><option value="Reserva livre">Reserva livre</option><option value="Reserva de emergência">Reserva de emergência</option></select></div>
+    <div class="field" id="fieldReservaDesc" style="display:none"><label>Descrição</label><input type="text" id="fReservaDesc" placeholder="ex: Fone de ouvido, Conserto do carro..."></div>
+    <div class="field-row">
+      <div class="field"><label>Data</label><input type="date" id="fData"></div>
+      <div class="field"><label>Valor (R$)</label><input type="text" id="fValor" placeholder="0,00" inputmode="numeric"></div>
+    </div>
+    <div class="field"><label>Tipo</label>
+      <select id="fTipo">
+        <option value="debit">Débito / Dinheiro</option>
+        <option value="card">Cartão de crédito</option>
+      </select>
+    </div>
+    <button class="btn-add" onclick="addExpense()">Adicionar gasto</button>
+  </div>
+</div>
+
+<div class="tab-content" id="tab-entradas">
+  <div class="form-card">
+    <h2>Nova entrada</h2>
+    <div class="field"><label>Tipo</label>
+      <select id="fEntradaTipo" onchange="onEntradaTipoChange()">
+        <option value="salario">💼 Salário</option>
+        <option value="vale">🎫 Vale</option>
+        <option value="outro">➕ Outra entrada</option>
+      </select>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Data</label><input type="date" id="fEntradaData"></div>
+      <div class="field"><label>Valor (R$)</label><input type="text" id="fEntradaValor" placeholder="0,00" inputmode="numeric"></div>
+    </div>
+    <div class="field" id="fieldEntradaDesc" style="display:none"><label>Descrição</label><input type="text" id="fEntradaDesc" placeholder="ex: Freelance, 13º..."></div>
+    <button class="btn-add entrada-btn" onclick="addEntrada()">Adicionar entrada</button>
+  </div>
+  <div class="income-section" id="incomeList"></div>
+</div>
+
+<div class="tab-content" id="tab-anual">
+  <div class="annual-controls">
+    <button class="annual-nav" onclick="changeAnnualYear(-1)">‹</button>
+    <span id="annualYearLabel"></span>
+    <button class="annual-nav" onclick="changeAnnualYear(1)">›</button>
+  </div>
+  <div class="annual-wrap"><table class="annual-table" id="annualTable"></table></div>
+</div>
+
+<div class="modal" id="editModal">
+  <div class="sheet-modal">
+    <div class="sheet-title">Editar lançamento</div>
+    <div class="sheet-fields">
+      <div class="field"><label>Categoria</label><select id="eCat" onchange="onEditCatChange()"><option value="">Selecione...</option></select></div>
+      <div class="field" id="eFieldSubcat" style="display:none"><label>Subcategoria</label><select id="eSubcat"></select></div>
+      <div class="field" id="eFieldSubcatLivre" style="display:none"><label>Descrição</label><input type="text" id="eSubcatLivre"></div>
+      <div class="field" id="eFieldParcela" style="display:none"><label>Parcela</label><input type="text" id="eParcela"></div>
+      <div id="eFieldFinanciamentoItem" style="display:none">
+        <label style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px;">Item financiado</label>
+        <div class="gas-toggle">
+          <button type="button" class="gas-btn active" id="eFinancMotoBtn" onclick="selectEditFinanciamentoItem('moto')">🏍️ Moto</button>
+          <button type="button" class="gas-btn" id="eFinancCarroBtn" onclick="selectEditFinanciamentoItem('carro')">🚗 Carro</button>
+          <button type="button" class="gas-btn" id="eFinancCasaBtn" onclick="selectEditFinanciamentoItem('casa')">🏠 Casa</button>
+        </div>
+        <input type="hidden" id="eFinanciamentoItem" value="moto">
+      </div>
+      <div id="eFieldSeguroVeiculo" style="display:none">
+        <label style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px;">Veículo</label>
+        <div class="gas-toggle">
+          <button type="button" class="gas-btn active" id="eSeguroMotoBtn" onclick="selectEditSeguroVeiculo('moto')">🏍️ Moto</button>
+          <button type="button" class="gas-btn" id="eSeguroCarroBtn" onclick="selectEditSeguroVeiculo('carro')">🚗 Carro</button>
+        </div>
+        <input type="hidden" id="eSeguroVeiculo" value="moto">
+      </div>
+      <div class="field" id="eFieldReservaSub" style="display:none"><label>Tipo de reserva</label><select id="eReservaSub"><option value="Reserva livre">Reserva livre</option><option value="Reserva de emergência">Reserva de emergência</option></select></div>
+      <div class="field" id="eFieldReservaDesc" style="display:none"><label>Descrição</label><input type="text" id="eReservaDesc" placeholder="Descrição do gasto"></div>
+      <div class="sheet-row">
+        <div class="field"><label>Data</label><input type="date" id="eData"></div>
+        <div class="field"><label>Valor (R$)</label><input type="text" id="eValor" inputmode="numeric"></div>
+      </div>
+      <div class="field"><label>Tipo</label>
+        <select id="eTipo">
+          <option value="debit">Débito / Dinheiro</option>
+          <option value="card">Cartão de crédito</option>
+        </select>
+      </div>
+    </div>
+    <div class="sheet-actions">
+      <button class="btn-cancel-sheet" onclick="closeEditModal()">Cancelar</button>
+      <button class="btn-save" onclick="saveEdit()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="editIncomeModal">
+  <div class="sheet-modal">
+    <div class="sheet-title">Editar entrada</div>
+    <div class="sheet-fields">
+      <div class="field"><label>Tipo</label>
+        <select id="eIncTipo" onchange="onEditIncTipoChange()">
+          <option value="salario">💼 Salário</option>
+          <option value="vale">🎫 Vale</option>
+          <option value="outro">➕ Outra entrada</option>
+        </select>
+      </div>
+      <div class="sheet-row">
+        <div class="field"><label>Data</label><input type="date" id="eIncData"></div>
+        <div class="field"><label>Valor (R$)</label><input type="text" id="eIncValor" inputmode="numeric"></div>
+      </div>
+      <div class="field" id="eIncFieldDesc" style="display:none"><label>Descrição</label><input type="text" id="eIncDesc"></div>
+    </div>
+    <div class="sheet-actions">
+      <button class="btn-cancel-sheet" onclick="closeEditIncomeModal()">Cancelar</button>
+      <button class="btn-save" onclick="saveIncomeEdit()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="projectedExpenseModal">
+  <div class="sheet-modal">
+    <div class="sheet-title">Adicionar gasto real</div>
+    <div class="sheet-fields">
+      <div class="field"><label>Categoria</label><input type="text" id="projectedExpenseLabel" readonly></div>
+      <div class="field" id="projFieldSubcat" style="display:none"><label>Subcategoria</label><select id="projectedExpenseSubcat"></select></div>
+      <div class="field" id="projFieldDesc" style="display:none"><label>Descrição</label><input type="text" id="projectedExpenseDesc" placeholder="Descrição do gasto"></div>
+      <div class="field" id="projFieldParcela" style="display:none"><label>Parcela</label><input type="text" id="projectedExpenseParcela" placeholder="ex: 1/3"></div>
+      <div class="field" id="projFieldCasaSub" style="display:none"><label>Subcategoria</label>
+        <select id="projectedExpenseCasaSub" onchange="onProjectedCasaSubChange()">
+          <option value="Energia">⚡ Energia</option><option value="Água">🚰 Água</option><option value="Internet">🌐 Internet</option><option value="Condomínio">🏢 Condomínio</option><option value="Utilidades">🧴 Utilidades</option>
+        </select>
+      </div>
+      <div class="field" id="projFieldCasaDesc" style="display:none"><label>Descrição</label><input type="text" id="projectedExpenseCasaDesc" placeholder="ex: Garrafão de água, Gás de cozinha..."></div>
+      <div class="field" id="projFieldVehicle" style="display:none"><label>Veículo</label>
+        <select id="projectedExpenseVehicle"><option value="moto">🏍️ Moto</option><option value="carro">🚗 Carro</option></select>
+      </div>
+      <div class="field" id="projFieldFinancing" style="display:none"><label>Item financiado</label>
+        <select id="projectedExpenseFinancing"><option value="moto">🏍️ Moto</option><option value="carro">🚗 Carro</option><option value="casa">🏠 Casa</option></select>
+      </div>
+      <div class="field" id="projFieldGasLitro" style="display:none"><label>Preço por litro (R$)</label><input type="text" id="projectedExpenseGasLitro" placeholder="0,00" inputmode="numeric"></div>
+      <div class="field" id="projFieldManutServico" style="display:none"><label>O que foi feito?</label><input type="text" id="projectedExpenseManutServico" placeholder="ex: Troca de óleo, Revisão, Freios..."></div>
+      <div class="field" id="projFieldManutOrigem" style="display:none"><label>Origem do pagamento</label>
+        <select id="projectedExpenseManutOrigem"><option value="mes">💵 Dinheiro do mês</option><option value="reserva">🏦 Reserva de emergência</option></select>
+      </div>
+      <div class="field" id="projFieldReservaSub" style="display:none"><label>Tipo de reserva</label><select id="projectedExpenseReservaSub"><option value="Reserva livre">Reserva livre</option><option value="Reserva de emergência">Reserva de emergência</option></select></div>
+      <div class="field" id="projFieldReservaDesc" style="display:none"><label>Descrição</label><input type="text" id="projectedExpenseReservaDesc" placeholder="Descrição do gasto"></div>
+      <div class="sheet-row">
+        <div class="field"><label>Data</label><input type="date" id="projectedExpenseDate"></div>
+        <div class="field"><label>Valor (R$)</label><input type="text" id="projectedExpenseValue" inputmode="numeric"></div>
+      </div>
+      <div class="field"><label>Forma de pagamento</label>
+        <select id="projectedExpenseType"><option value="debit">Débito / Dinheiro</option><option value="card">Cartão de crédito</option></select>
+      </div>
+    </div>
+    <div class="sheet-actions">
+      <button class="btn-cancel-sheet" onclick="closeProjectedExpenseModal()">Cancelar</button>
+      <button class="btn-save" onclick="saveProjectedAsExpense()">Adicionar gasto</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="plannedSubcategoryModal">
+  <div class="modal-inner">
+    <div class="modal-title" id="plannedSubcategoryTitle">Escolha uma opção</div>
+    <div class="field"><label>Subcategoria</label><select id="plannedSubcategorySelect" onchange="onPlannedSubcategoryChange()"></select></div>
+    <div class="field" id="plannedSubcategoryDescField" style="display:none"><label>Descrição</label><input type="text" id="plannedSubcategoryDesc" placeholder="Descrição"></div>
+    <div class="field"><label>Valor previsto (R$)</label><input type="text" id="plannedSubcategoryValue" placeholder="0,00" inputmode="numeric"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closePlannedSubcategoryModal()">Cancelar</button>
+      <button class="btn-confirm" onclick="confirmPlannedSubcategory()">Criar previsão</button>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal" id="plannedSimpleModal">
+  <div class="modal-inner">
+    <div class="modal-title" id="plannedSimpleTitle">Nova previsão</div>
+    <div class="field"><label>Valor previsto (R$)</label><input type="text" id="plannedSimpleValue" placeholder="0,00" inputmode="numeric"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closePlannedSimpleModal()">Cancelar</button>
+      <button class="btn-confirm" onclick="confirmPlannedSimple()">Criar previsão</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="plannedFreeModal">
+  <div class="modal-inner">
+    <div class="modal-title" id="plannedFreeTitle">Nova previsão</div>
+    <div class="field"><label>Descrição</label><input type="text" id="plannedFreeDesc" placeholder="Descrição"></div>
+    <div class="field"><label>Valor previsto (R$)</label><input type="text" id="plannedFreeValue" placeholder="0,00" inputmode="numeric"></div>
+    <div class="field" id="plannedFreeParcelaField" style="display:none"><label>Parcela</label><input type="text" id="plannedFreeParcela" placeholder="Ex.: 1/10"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closePlannedFreeModal()">Cancelar</button>
+      <button class="btn-confirm" onclick="confirmPlannedFree()">Criar previsão</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="importModal">
+  <div class="modal-inner">
+    <div class="modal-title">Importar dados</div>
+    <input type="file" id="importFile" accept=".json">
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeImportModal()">Cancelar</button>
+      <button class="btn-confirm" onclick="importData()">Importar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── SUPABASE CONFIG ───────────────────────────────────────────────────────────
+var SB_URL  = 'https://lkvndctoalrcpfydorby.supabase.co';
+var SB_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxrdm5kY3RvYWxyY3BmeWRvcmJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk5MTkxODAsImV4cCI6MjEwNTQ5NTE4MH0.LUhdqeLkxg2gRQ8YN823_6-_2r-b6dV6Go2LGMumYMY';
+
+var MONTH_NAMES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+var MONTH_SHORT=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+var CATEGORIES=[
+  {id:'aluguel',name:'Aluguel',emoji:'🔑',sub:['Apartamento','Garagem'],livre:false,parcela:false},
+  {id:'casa',name:'Casa',emoji:'🏡',sub:[],livre:false,parcela:false},
+  {id:'seguro',name:'Seguro',emoji:'🛡️',sub:[],livre:false,parcela:false},
+  {id:'financiamento',name:'Financiamento',emoji:'🧾',sub:[],livre:false,parcela:false},
+  {id:'celular',name:'Recarga',emoji:'📱',sub:[],livre:false,parcela:false},
+  {id:'gasolina',name:'Gasolina',emoji:'⛽',sub:[],livre:false,parcela:false},
+  {id:'manutencao',name:'Manutenção',emoji:'🔧',sub:[],livre:false,parcela:false},
+  {id:'alimentacao',name:'Alimentação',emoji:'🛒',sub:[],livre:true,parcela:false},
+  {id:'fatura',name:'Fatura',emoji:'💳',sub:['Nubank','Santander'],livre:false,parcela:false},
+  {id:'carteiro',name:'Cartão - Terceiros',emoji:'🪪',sub:[],livre:true,parcela:true},
+  {id:'cabelo',name:'Cuidados pessoais',emoji:'✂️',sub:[],livre:true,parcela:false},
+  {id:'weed',name:'Weed',emoji:'🌿',sub:[],livre:true,parcela:false},
+  {id:'faculdade',name:'Educação',emoji:'📚',sub:[],livre:true,parcela:true},
+  {id:'investimentos',name:'Investimentos',emoji:'📈',sub:[],livre:false,parcela:false},
+  {id:'outros',name:'Gastos diversos',emoji:'📦',sub:[],livre:true,parcela:false},
+  {id:'reserva',name:'Reserva',emoji:'🏦',sub:['Reserva livre','Reserva de emergência'],livre:false,parcela:false},
+];
+var CASA_SUBCATS=['Energia','Água','Internet','Condomínio','Utilidades'];
+var INCOME_TYPES=[{id:'salario',name:'Salário',emoji:'💼'},{id:'vale',name:'Vale',emoji:'🎫'},{id:'outro',name:'Outra entrada',emoji:'➕'},{id:'reserva',name:'Uso da reserva',emoji:'🏦'}];
+
+var currentYear=new Date().getFullYear();
+var currentMonth=new Date().getMonth();
+var annualYear=new Date().getFullYear();
+var valuesVisible=true;
+var showingHidden=false;
+var editingId=null;
+var editingIncId=null;
+var expenses=[];
+var incomes=[];
+var hiddenCats=[];
+var syncTimer=null;
+var planningSyncReady=false;
+
+// ── SUPABASE API ──────────────────────────────────────────────────────────────
+function sbFetch(path, method, body) {
+  return fetch(SB_URL + '/rest/v1/' + path, {
+    method: method || 'GET',
+    headers: {
+      'apikey': SB_KEY,
+      'Authorization': 'Bearer ' + SB_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': method === 'POST' ? 'resolution=merge-duplicates' : ''
+    },
+    body: body ? JSON.stringify(body) : undefined
+  }).then(function(r) {
+    if (!r.ok) return r.text().then(function(t) { throw new Error(t); });
+    return r.text().then(function(t) { return t ? JSON.parse(t) : null; });
+  });
+}
+
+async function loadFromDB() {
+  try {
+    var expRows = await sbFetch('expenses?select=id,data&order=id.asc');
+    var incRows = await sbFetch('incomes?select=id,data&order=id.asc');
+    var setRows = await sbFetch('settings?select=key,data');
+
+    expenses = (expRows || []).map(function(r) { return r.data; });
+    incomes  = (incRows || []).map(function(r) { return r.data; });
+
+    var hidRow = (setRows || []).find(function(r) { return r.key === 'hidden_cats'; });
+    hiddenCats = hidRow ? hidRow.data : [];
+
+    var plannedRow=(setRows||[]).find(function(r){return r.key==='planned_items';});
+    if(plannedRow&&Array.isArray(plannedRow.data)){
+      plannedItems=plannedRow.data;
+      localStorage.setItem(PLANNED_STORAGE_KEY,JSON.stringify(plannedItems));
+    }else{
+      await savePlannedToDB();
+    }
+
+    var simulationRow=(setRows||[]).find(function(r){return r.key==='simulation_data';});
+    if(simulationRow&&simulationRow.data&&simulationRow.data.months&&typeof simulationRow.data.months==='object'){
+      simData=simulationRow.data.months;
+      localStorage.setItem(SIM_STORAGE_KEY,JSON.stringify({months:simData}));
+      _simMonthKey=null;
+      loadSimMonth();
+    }else{
+      await saveSimulationToDB();
+    }
+
+    planningSyncReady=true;
+    setSyncDot('ok');
+    return true;
+  } catch(e) {
+    console.error('Erro ao carregar:', e);
+    // fallback localStorage
+    expenses   = JSON.parse(localStorage.getItem('gastos_v2') || '[]');
+    incomes    = JSON.parse(localStorage.getItem('entradas_v2') || '[]');
+    hiddenCats = JSON.parse(localStorage.getItem('cats_hidden') || '[]');
+    planningSyncReady=true;
+    setSyncDot('err');
+    return false;
+  }
+}
+
+async function saveExpenseToDB(exp) {
+  return sbFetch('expenses', 'POST', { id: exp.id, data: exp });
+}
+
+async function deleteExpenseFromDB(id) {
+  return sbFetch('expenses?id=eq.' + id, 'DELETE');
+}
+
+async function saveIncomeToDB(inc) {
+  return sbFetch('incomes', 'POST', { id: inc.id, data: inc });
+}
+
+async function deleteIncomeFromDB(id) {
+  return sbFetch('incomes?id=eq.' + id, 'DELETE');
+}
+
+async function saveHiddenToDB() {
+  return sbFetch('settings', 'POST', { key: 'hidden_cats', data: hiddenCats });
+}
+
+async function savePlannedToDB() {
+  return sbFetch('settings', 'POST', { key: 'planned_items', data: plannedItems });
+}
+
+async function saveSimulationToDB() {
+  return sbFetch('settings', 'POST', { key: 'simulation_data', data: { months: simData } });
+}
+
+function makeReserveIncome(exp){return {id:Date.now()+1,type:'reserva',date:exp.date,value:exp.value,desc:(exp.subcategory||'Reserva')+' · '+(exp.reserveDesc||''),reservePairId:exp.reservePairId||exp.id,automatic:true};}
+function findReserveIncome(pairId){return incomes.find(function(i){return i.type==='reserva'&&i.automatic===true&&i.reservePairId===pairId;});}
+async function syncReserveIncomeForExpense(exp){
+  var inc=findReserveIncome(exp.reservePairId);
+  if(!inc){inc=makeReserveIncome(exp);incomes.push(inc);}
+  inc.type='reserva';inc.date=exp.date;inc.value=exp.value;inc.desc=(exp.subcategory||'Reserva')+' · '+(exp.reserveDesc||'');inc.reservePairId=exp.reservePairId;inc.automatic=true;
+  await saveIncomeToDB(inc);return inc;
+}
+
+// ── MIGRAÇÃO REAL: energia/internet/agua → casa ─────────────────────────────────
+// Migra fisicamente os registros antigos para categoryId 'casa', preservando os
+// demais campos (id, date, value, type, parcela). Idempotente: como o próprio
+// filtro só encontra registros com o categoryId legado, rodar de novo não repete
+// nada, e o upsert no Supabase (mesmo id) nunca cria linha duplicada.
+async function migrateLegacyCasa() {
+  var map = { energia: 'Energia', internet: 'Internet', agua: 'Utilidades' };
+  var pending = expenses.filter(function(e) { return map.hasOwnProperty(e.categoryId); });
+  if (!pending.length) return;
+  for (var i = 0; i < pending.length; i++) {
+    var e = pending[i];
+    var oldCat = e.categoryId;
+    e.categoryId = 'casa';
+    e.subcategory = map[oldCat];
+    if (oldCat === 'agua' && !e.casaDesc) e.casaDesc = 'Garrafão de água';
+    try { await saveExpenseToDB(e); } catch (err) { console.error('Erro ao migrar lançamento ' + e.id + ':', err); }
+  }
+  saveLocal();
+}
+
+// ── MIGRAÇÃO REAL: financiamento 'XRE 300' → 'moto' ─────────────────────────────
+// Idempotente: só encontra registros com subcategory 'XRE 300'; após a primeira
+// execução não há mais nada a migrar, e o upsert no Supabase (mesmo id) nunca
+// cria linha duplicada.
+async function migrateLegacyFinanciamento() {
+  var pending = expenses.filter(function(e) { return e.categoryId === 'financiamento' && e.subcategory === 'XRE 300'; });
+  if (!pending.length) return;
+  for (var i = 0; i < pending.length; i++) {
+    var e = pending[i];
+    e.subcategory = 'moto';
+    try { await saveExpenseToDB(e); } catch (err) { console.error('Erro ao migrar lançamento ' + e.id + ':', err); }
+  }
+  saveLocal();
+}
+
+function setSyncDot(state) {
+  var dot = document.getElementById('syncDot');
+  dot.className = 'sync-dot ' + state;
+}
+
+function saveLocal() {
+  localStorage.setItem('gastos_v2', JSON.stringify(expenses));
+  localStorage.setItem('entradas_v2', JSON.stringify(incomes));
+  localStorage.setItem('cats_hidden', JSON.stringify(hiddenCats));
+}
+
+// ── SIMULAÇÃO (localStorage + sincronização via settings do Supabase) ──────────
+var SIM_STORAGE_KEY='simulacao_v1';
+var simExpenses=[];
+var simIncomes=[];
+var _simSaldoAtual=0,_simGastos=0,_simEntradas=0,_simSaldoProjetado=0;
+
+// Estrutura salva em SIM_STORAGE_KEY: { months: { 'YYYY-MM': { expenses:[], incomes:[] } } }
+// simExpenses/simIncomes sempre representam a simulação do mês em _simMonthKey.
+var simData={};
+var _simMonthKey=null;
+
+function loadSimulacao(){
+  simData={};
+  try{
+    var raw=localStorage.getItem(SIM_STORAGE_KEY);
+    var parsed=raw?JSON.parse(raw):null;
+    if(parsed&&parsed.months&&typeof parsed.months==='object'){
+      simData=parsed.months;
+    }else if(parsed&&(Array.isArray(parsed.expenses)||Array.isArray(parsed.incomes))){
+      // formato antigo (simulação global): migra para o mês atualmente selecionado
+      simData[monthKey()]={
+        expenses:Array.isArray(parsed.expenses)?parsed.expenses:[],
+        incomes:Array.isArray(parsed.incomes)?parsed.incomes:[]
+      };
+      try{localStorage.setItem(SIM_STORAGE_KEY,JSON.stringify({months:simData}));}catch(e2){}
+    }
+  }catch(err){
+    console.error('Erro ao carregar simulação:',err);
+    simData={};
+  }
+  _simMonthKey=null;
+  loadSimMonth();
+}
+
+// carrega em simExpenses/simIncomes a simulação do mês exibido (não faz nada se já for o mesmo mês)
+function loadSimMonth(){
+  var key=monthKey();
+  if(key===_simMonthKey)return;
+  _simMonthKey=key;
+  var m=simData[key];
+  simExpenses=(m&&Array.isArray(m.expenses))?m.expenses:[];
+  simIncomes=(m&&Array.isArray(m.incomes))?m.incomes:[];
+}
+
+function saveSimulacao(){
+  try{
+    var key=_simMonthKey||monthKey();
+    if(simExpenses.length||simIncomes.length)simData[key]={expenses:simExpenses,incomes:simIncomes};
+    else delete simData[key];
+    localStorage.setItem(SIM_STORAGE_KEY,JSON.stringify({months:simData}));
+    if(planningSyncReady)saveSimulationToDB().catch(function(err){console.error('Erro ao sincronizar simulação:',err);});
+  }catch(err){console.error('Erro ao salvar simulação:',err);}
+}
+
+function populateSimCategorySelect(){
+  var sel=document.getElementById('simCategoria');
+  CATEGORIES.forEach(function(c){var o=document.createElement('option');o.value=c.id;o.textContent=c.emoji+' '+c.name;sel.appendChild(o);});
+}
+
+function onSimTipoChange(){
+  var tipo=document.getElementById('simTipo').value;
+  document.getElementById('simGastoFields').style.display=tipo==='gasto'?'block':'none';
+  document.getElementById('simEntradaFields').style.display=tipo==='entrada'?'block':'none';
+  if(tipo==='gasto')onSimCategoriaChange();
+}
+
+function onSimCategoriaChange(){
+  var catId=document.getElementById('simCategoria').value;
+  var cat=CATEGORIES.find(function(c){return c.id===catId;});
+  document.getElementById('simFieldSubcat').style.display='none';
+  document.getElementById('simFieldSubcatLivre').style.display='none';
+  document.getElementById('simFieldParcela').style.display='none';
+  document.getElementById('simFieldGasolinaVeiculo').style.display='none';
+  document.getElementById('simFieldGasolinaLitro').style.display='none';
+  document.getElementById('simFieldManutVeiculo').style.display='none';
+  document.getElementById('simFieldManutServico').style.display='none';
+  document.getElementById('simFieldManutOrigem').style.display='none';
+  document.getElementById('simFieldCasaSub').style.display='none';
+  document.getElementById('simFieldCasaDesc').style.display='none';
+  document.getElementById('simFieldSeguroVeiculo').style.display='none';
+  document.getElementById('simFieldFinanciamentoItem').style.display='none';
+  if(!cat)return;
+  if(catId==='seguro'){
+    document.getElementById('simFieldSeguroVeiculo').style.display='block';
+    return;
+  }
+  if(catId==='financiamento'){
+    document.getElementById('simFieldFinanciamentoItem').style.display='block';
+    return;
+  }
+  if(catId==='reserva'){
+    sub=document.getElementById('fReservaSub').value;
+    var reserveDesc=document.getElementById('fReservaDesc').value.trim();
+    if(!reserveDesc){alert('Adicione uma descrição.');return;}
+  }else if(catId==='gasolina'){
+    document.getElementById('simFieldGasolinaVeiculo').style.display='block';
+    document.getElementById('simFieldGasolinaLitro').style.display='flex';
+    setupMask('simGasLitro');
+    return;
+  }
+  if(catId==='manutencao'){
+    document.getElementById('simFieldManutVeiculo').style.display='block';
+    document.getElementById('simFieldManutServico').style.display='flex';
+    document.getElementById('simFieldManutOrigem').style.display='flex';
+    return;
+  }
+  if(catId==='casa'){
+    document.getElementById('simFieldCasaSub').style.display='flex';
+    onSimCasaSubChange();
+    return;
+  }
+  if(cat.sub.length>0){
+    var sel=document.getElementById('simSubcategoria');sel.innerHTML='';
+    cat.sub.forEach(function(s){var o=document.createElement('option');o.value=s;o.textContent=s;sel.appendChild(o);});
+    document.getElementById('simFieldSubcat').style.display='flex';
+  }else if(cat.livre){document.getElementById('simFieldSubcatLivre').style.display='flex';}
+  if(cat.parcela)document.getElementById('simFieldParcela').style.display='flex';
+}
+
+function onSimCasaSubChange(){
+  var v=document.getElementById('simCasaSub').value;
+  document.getElementById('simFieldCasaDesc').style.display=v==='Utilidades'?'flex':'none';
+}
+
+function selectSimVeiculo(v){
+  document.getElementById('simGasVeiculo').value=v;
+  document.getElementById('simGasMotoBtn').classList.toggle('active',v==='moto');
+  document.getElementById('simGasCarroBtn').classList.toggle('active',v==='carro');
+}
+
+function selectSimFinanciamentoItem(v){
+  document.getElementById('simFinanciamentoItem').value=v;
+  document.getElementById('simFinancMotoBtn').classList.toggle('active',v==='moto');
+  document.getElementById('simFinancCarroBtn').classList.toggle('active',v==='carro');
+  document.getElementById('simFinancCasaBtn').classList.toggle('active',v==='casa');
+}
+
+function selectSimSeguroVeiculo(v){
+  document.getElementById('simSeguroVeiculo').value=v;
+  document.getElementById('simSeguroMotoBtn').classList.toggle('active',v==='moto');
+  document.getElementById('simSeguroCarroBtn').classList.toggle('active',v==='carro');
+}
+
+function selectSimManutVeiculo(v){
+  document.getElementById('simManutVeiculo').value=v;
+  document.getElementById('simManutMotoBtn').classList.toggle('active',v==='moto');
+  document.getElementById('simManutCarroBtn').classList.toggle('active',v==='carro');
+}
+
+function addSimEntry(){
+  var tipo=document.getElementById('simTipo').value;
+  var value=parseVal(document.getElementById('simValor').value);
+  if(value<=0){alert('Preencha o valor.');return;}
+
+  if(tipo==='entrada'){
+    var desc=document.getElementById('simDesc').value.trim();
+    var incEntry={id:Date.now(),desc:desc,value:value,kind:'entrada'};
+    simIncomes.push(incEntry);
+    saveSimulacao();
+    document.getElementById('simDesc').value='';
+    document.getElementById('simValor').value='';
+    renderResume(true);
+    return;
+  }
+
+  // gasto: reaproveita a mesma estrutura de categorias do app real
+  var catId=document.getElementById('simCategoria').value;
+  var cat=CATEGORIES.find(function(c){return c.id===catId;});
+  if(!catId){alert('Selecione uma categoria.');return;}
+  var sub=null;var parcela=null;var gasLitro=null;var manutExtra=null;var casaDesc=null;
+  if(catId==='gasolina'){
+    sub=document.getElementById('simGasVeiculo').value;
+    gasLitro=parseVal(document.getElementById('simGasLitro').value)||null;
+  }else if(catId==='manutencao'){
+    sub=document.getElementById('simManutVeiculo').value;
+    var servico=document.getElementById('simManutServico').value.trim();
+    var origem=document.getElementById('simManutOrigem').value;
+    if(!servico){alert('Descreva o serviço realizado.');return;}
+    manutExtra={servico:servico,origem:origem};
+  }else if(catId==='casa'){
+    sub=document.getElementById('simCasaSub').value;
+    if(sub==='Utilidades'){
+      casaDesc=document.getElementById('simCasaDesc').value.trim();
+      if(!casaDesc){alert('Descreva o item de Utilidades.');return;}
+    }
+  }else if(catId==='seguro'){
+    sub=document.getElementById('simSeguroVeiculo').value;
+  }else if(catId==='financiamento'){
+    sub=document.getElementById('simFinanciamentoItem').value;
+  }else if(cat.sub.length>0){
+    sub=document.getElementById('simSubcategoria').value;
+  }else if(cat.livre){
+    sub=document.getElementById('simSubcatLivre').value.trim();
+    if(!sub){alert('Adicione uma descrição.');return;}
+  }
+  if(cat.parcela)parcela=document.getElementById('simParcela').value.trim()||null;
+
+  var expEntry={id:Date.now(),categoryId:catId,subcategory:sub,parcela:parcela,value:value,kind:'gasto'};
+  if(gasLitro)expEntry.gasLitro=gasLitro;
+  if(manutExtra)expEntry.manutExtra=manutExtra;
+  if(casaDesc)expEntry.casaDesc=casaDesc;
+  simExpenses.push(expEntry);
+  saveSimulacao();
+
+  // limpa form de gasto
+  document.getElementById('simCategoria').value='';
+  document.getElementById('simValor').value='';
+  document.getElementById('simSubcatLivre').value='';
+  document.getElementById('simParcela').value='';
+  document.getElementById('simGasLitro').value='';
+  document.getElementById('simManutServico').value='';
+  document.getElementById('simManutOrigem').value='mes';
+  document.getElementById('simCasaSub').value='Energia';
+  document.getElementById('simCasaDesc').value='';
+  selectSimVeiculo('moto');
+  selectSimFinanciamentoItem('moto');
+  selectSimSeguroVeiculo('moto');
+  selectSimManutVeiculo('moto');
+  onSimCategoriaChange();
+  renderResume(true);
+}
+
+function deleteSimEntry(kind,id){
+  if(kind==='gasto')simExpenses=simExpenses.filter(function(e){return e.id!==id;});
+  else simIncomes=simIncomes.filter(function(e){return e.id!==id;});
+  saveSimulacao();
+  renderResume(true);
+}
+
+function clearSimulacao(){
+  if(!simExpenses.length&&!simIncomes.length)return;
+  if(!confirm('Limpar toda a simulação atual? Isso não afeta seus dados reais.'))return;
+  simExpenses=[];simIncomes=[];
+  saveSimulacao();
+  renderResume(true);
+}
+
+function simEntryHTML(e){
+  var isGasto=e.kind==='gasto';
+  var valueColor=isGasto?'#f87171':'#4ade80';
+  var sign=isGasto?'- ':'+ ';
+  var name='Entrada simulada';
+  var metaParts=[];
+  if(isGasto){
+    var cat=CATEGORIES.find(function(c){return c.id===e.categoryId;});
+    name=cat?(cat.emoji+' '+cat.name):'Gasto simulado';
+    if(e.subcategory==='moto')metaParts.push('🏍️ Moto');
+    else if(e.subcategory==='carro')metaParts.push('🚗 Carro');
+    else if(e.subcategory==='casa'&&cat&&cat.id==='financiamento')metaParts.push('🏠 Casa');
+    else if(e.subcategory)metaParts.push(e.subcategory);
+    if(e.casaDesc)metaParts.push(e.casaDesc);
+    if(e.manutExtra&&e.manutExtra.servico)metaParts.push(e.manutExtra.servico);
+    if(e.manutExtra&&e.manutExtra.origem==='reserva')metaParts.push('🏦 Reserva');
+    if(e.gasLitro)metaParts.push('R$'+e.gasLitro.toFixed(2).replace('.',',')+'/L');
+    if(e.parcela)metaParts.push('Parcela '+e.parcela);
+  }else{
+    name=e.desc||'Entrada simulada';
+  }
+  metaParts.push('<span style="color:#a78bfa;font-weight:600;">🧪 Simulado</span>');
+  return '<div class="entry-row">'+
+    '<div class="entry-row-top"><span class="entry-name">'+name+'</span>'+
+      '<span class="entry-value" style="color:'+valueColor+'">'+sign+fBRL(e.value)+'</span></div>'+
+    '<div class="entry-row-bottom"><span class="entry-meta">'+metaParts.join(' · ')+'</span>'+
+      '<span class="entry-actions"><button class="btn-del" onclick="deleteSimEntry(\''+e.kind+'\','+e.id+')">✕</button></span></div>'+
+  '</div>';
+}
+
+// ── ITENS PLANEJADOS ("Ainda pretendo gastar") — localStorage + Supabase ─────────
+// Cada item é um modelo reutilizável entre meses (categoria, subcategoria/descrição, valor padrão).
+// "Ativo na projeção" = existe em simExpenses do mês atual (via plannedId).
+var PLANNED_STORAGE_KEY='planejados_v1';
+var plannedItems=[];
+var _pendingPlanned=[];
+var _lastUid=0;
+function newUid(){var t=Date.now();_lastUid=t>_lastUid?t:_lastUid+1;return _lastUid;}
+function escAttr(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
+function fmtInputVal(v){return v>0?v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}):'';}
+
+function defaultPlannedItems(){
+  var seed=[
+    ['aluguel','Apartamento',''],
+    ['financiamento','moto',''],
+    ['casa','Energia',''],
+    ['casa','Internet',''],
+    ['casa','Condomínio',''],
+    ['celular',null,''],
+    ['gasolina','moto',''],
+    ['alimentacao',null,''],
+    ['cabelo',null,'Cabelo'],
+    ['outros',null,'']
+  ];
+  return seed.map(function(x){return {id:newUid(),categoryId:x[0],sub:x[1],desc:x[2],value:0};});
+}
+
+function loadPlanejados(){
+  try{
+    var raw=localStorage.getItem(PLANNED_STORAGE_KEY);
+    var parsed=raw?JSON.parse(raw):null;
+    if(Array.isArray(parsed)){plannedItems=parsed;}
+    else{plannedItems=defaultPlannedItems();savePlanejados();}
+  }catch(err){
+    console.error('Erro ao carregar itens planejados:',err);
+    plannedItems=defaultPlannedItems();
+  }
+}
+
+function savePlanejados(){
+  try{
+    localStorage.setItem(PLANNED_STORAGE_KEY,JSON.stringify(plannedItems));
+    if(planningSyncReady)savePlannedToDB().catch(function(err){console.error('Erro ao sincronizar itens planejados:',err);});
+  }catch(err){console.error('Erro ao salvar itens planejados:',err);}
+}
+
+function plannedCat(p){return CATEGORIES.find(function(c){return c.id===p.categoryId;});}
+
+// subcategory que o gasto terá (igual ao app real: categorias livres usam a descrição)
+function plannedSubcategory(p){
+  var cat=plannedCat(p);
+  if(cat&&cat.livre)return String(p.desc||'').trim();
+  return p.sub||null;
+}
+
+function plannedLabel(p){
+  var cat=plannedCat(p);
+  if(!cat)return 'Item';
+  var label=cat.emoji+' '+cat.name;
+  if(!cat.livre&&p.sub){
+    var sl=p.sub;
+    if(p.sub==='moto')sl='🏍️ Moto';
+    else if(p.sub==='carro')sl='🚗 Carro';
+    else if(p.sub==='casa'&&cat.id==='financiamento')sl='🏠 Casa';
+    label+=' · '+sl;
+  }
+  return label;
+}
+
+// lê os inputs do DOM (evita valor defasado se o toque no item ocorrer antes do "change")
+function syncPlannedFromDom(pid){
+  var p=plannedItems.find(function(x){return x.id===pid;});
+  if(!p)return null;
+  var di=document.getElementById('planDesc_'+pid);
+  if(di)p.desc=di.value.trim();
+  var vi=document.getElementById('planVal_'+pid);
+  if(vi)p.value=parseVal(vi.value);
+  savePlanejados();
+  return p;
+}
+
+function updatePlannedValue(pid,el){
+  var p=plannedItems.find(function(x){return x.id===pid;});
+  if(!p)return;
+  p.value=parseVal(el.value);
+  el.value=fmtInputVal(p.value);
+  savePlanejados();
+}
+
+function updatePlannedDesc(pid,el){
+  var p=plannedItems.find(function(x){return x.id===pid;});
+  if(!p)return;
+  p.desc=el.value.trim();
+  savePlanejados();
+}
+
+// clique no item: entra em simExpenses do mês atual (passa para "Considerado na projeção")
+function activatePlanned(pid){
+  var p=syncPlannedFromDom(pid);
+  if(!p)return;
+  if(simExpenses.some(function(e){return e.plannedId===pid;}))return;
+  var cat=plannedCat(p);
+  if(!cat)return;
+  if(!(p.value>0)){
+    alert('Defina um valor para este item.');
+    var vi=document.getElementById('planVal_'+pid);
+    if(vi)vi.focus();
+    return;
+  }
+  var sub=plannedSubcategory(p);
+  if(cat.livre&&!sub){
+    var d=prompt('Descrição do gasto ('+cat.name+'):');
+    if(!d||!d.trim())return;
+    p.desc=d.trim();sub=p.desc;
+    savePlanejados();
+  }
+  simExpenses.push({id:newUid(),categoryId:p.categoryId,subcategory:sub,parcela:p.parcela||null,value:p.value,kind:'gasto',plannedId:pid,casaDesc:p.categoryId==='casa'&&p.sub==='Utilidades'?(p.desc||null):null});
+  saveSimulacao();
+  renderResume(true);
+}
+
+function duplicatePlanned(pid){
+  var p=syncPlannedFromDom(pid);
+  if(!p)return;
+  var idx=plannedItems.indexOf(p);
+  plannedItems.splice(idx+1,0,{id:newUid(),categoryId:p.categoryId,sub:p.sub,desc:p.desc,value:p.value,parcela:p.parcela||null});
+  savePlanejados();
+  renderResume(true);
+}
+
+function removePlanned(pid){
+  if(!confirm('Remover este item planejado?'))return;
+  plannedItems=plannedItems.filter(function(x){return x.id!==pid;});
+  savePlanejados();
+  renderResume(true);
+}
+
+var plannedSubcategoryCategoryId=null;
+var PLANNED_SUBCATEGORY_OPTIONS={
+  casa:[['Energia','⚡ Energia'],['Água','🚰 Água'],['Internet','🌐 Internet'],['Condomínio','🏢 Condomínio'],['Utilidades','🧴 Utilidades']],
+  aluguel:[['Apartamento','Apartamento'],['Garagem','Garagem']],
+  fatura:[['Nubank','Nubank'],['Santander','Santander']],
+  seguro:[['moto','🏍️ Moto'],['carro','🚗 Carro']],
+  financiamento:[['moto','🏍️ Moto'],['carro','🚗 Carro'],['casa','🏠 Casa']],
+  gasolina:[['moto','🏍️ Moto'],['carro','🚗 Carro']],
+  manutencao:[['moto','🏍️ Moto'],['carro','🚗 Carro']]
+};
+
+var plannedFreeCategoryId=null;
+var plannedSimpleCategoryId=null;
+
+function addPlannedForCategory(catId){
+  var cat=CATEGORIES.find(function(c){return c.id===catId;});
+  if(!cat)return;
+  var options=PLANNED_SUBCATEGORY_OPTIONS[catId];
+  if(options){
+    plannedSubcategoryCategoryId=catId;
+    document.getElementById('plannedSubcategoryTitle').textContent='Nova previsão · '+cat.name;
+    var sel=document.getElementById('plannedSubcategorySelect');
+    sel.innerHTML='';
+    options.forEach(function(opt){var o=document.createElement('option');o.value=opt[0];o.textContent=opt[1];sel.appendChild(o);});
+    document.getElementById('plannedSubcategoryValue').value='';
+    document.getElementById('plannedSubcategoryDesc').value='';
+    onPlannedSubcategoryChange();
+    document.getElementById('plannedSubcategoryModal').classList.add('active');
+    setupMask('plannedSubcategoryValue');
+    return;
+  }
+  if(catId==='celular'){
+    plannedSimpleCategoryId=catId;
+    document.getElementById('plannedSimpleTitle').textContent='Nova previsão · '+cat.name;
+    document.getElementById('plannedSimpleValue').value='';
+    document.getElementById('plannedSimpleModal').classList.add('active');
+    setupMask('plannedSimpleValue');
+    return;
+  }
+  if(cat.livre){
+    plannedFreeCategoryId=catId;
+    document.getElementById('plannedFreeTitle').textContent='Nova previsão · '+cat.name;
+    document.getElementById('plannedFreeDesc').value='';
+    document.getElementById('plannedFreeValue').value='';
+    document.getElementById('plannedFreeParcela').value='';
+    document.getElementById('plannedFreeParcelaField').style.display=cat.parcela?'flex':'none';
+    document.getElementById('plannedFreeModal').classList.add('active');
+    setTimeout(function(){document.getElementById('plannedFreeDesc').focus();},50);
+    return;
+  }
+  createPlannedItem(catId,null);
+}
+
+function createPlannedItem(catId,sub,desc,value,parcela){
+  plannedItems.push({id:newUid(),categoryId:catId,sub:sub||null,desc:desc||'',value:value||0,parcela:parcela||null});
+  savePlanejados();
+  renderResume(true);
+}
+
+function confirmPlannedFree(){
+  if(!plannedFreeCategoryId)return;
+  var cat=CATEGORIES.find(function(c){return c.id===plannedFreeCategoryId;});
+  if(!cat)return;
+  var desc=document.getElementById('plannedFreeDesc').value.trim();
+  var value=parseVal(document.getElementById('plannedFreeValue').value);
+  var parcela=cat.parcela?document.getElementById('plannedFreeParcela').value.trim():null;
+  if(!desc){alert('Informe a descrição.');document.getElementById('plannedFreeDesc').focus();return;}
+  if(!(value>0)){alert('Informe o valor previsto.');document.getElementById('plannedFreeValue').focus();return;}
+  var catId=plannedFreeCategoryId;
+  closePlannedFreeModal();
+  createPlannedItem(catId,null,desc,value,parcela);
+}
+
+function closePlannedFreeModal(){
+  plannedFreeCategoryId=null;
+  document.getElementById('plannedFreeModal').classList.remove('active');
+}
+
+function onPlannedSubcategoryChange(){
+  var isUtility=plannedSubcategoryCategoryId==='casa'&&document.getElementById('plannedSubcategorySelect').value==='Utilidades';
+  document.getElementById('plannedSubcategoryDescField').style.display=isUtility?'flex':'none';
+}
+
+function confirmPlannedSubcategory(){
+  if(!plannedSubcategoryCategoryId)return;
+  var catId=plannedSubcategoryCategoryId;
+  var sub=document.getElementById('plannedSubcategorySelect').value;
+  var value=parseVal(document.getElementById('plannedSubcategoryValue').value);
+  var desc=catId==='casa'&&sub==='Utilidades'?document.getElementById('plannedSubcategoryDesc').value.trim():'';
+  if(!(value>0)){alert('Informe o valor previsto.');document.getElementById('plannedSubcategoryValue').focus();return;}
+  if(catId==='casa'&&sub==='Utilidades'&&!desc){alert('Informe a descrição.');document.getElementById('plannedSubcategoryDesc').focus();return;}
+  closePlannedSubcategoryModal();
+  createPlannedItem(catId,sub,desc,value);
+}
+
+function closePlannedSubcategoryModal(){
+  plannedSubcategoryCategoryId=null;
+  document.getElementById('plannedSubcategoryModal').classList.remove('active');
+}
+
+function confirmPlannedSimple(){
+  if(!plannedSimpleCategoryId)return;
+  var value=parseVal(document.getElementById('plannedSimpleValue').value);
+  if(!(value>0)){alert('Informe o valor previsto.');document.getElementById('plannedSimpleValue').focus();return;}
+  var catId=plannedSimpleCategoryId;
+  closePlannedSimpleModal();
+  createPlannedItem(catId,null,'',value);
+}
+
+function closePlannedSimpleModal(){
+  plannedSimpleCategoryId=null;
+  document.getElementById('plannedSimpleModal').classList.remove('active');
+}
+
+// ── PLANEJAMENTO DENTRO DAS CATEGORIAS ────────────────────────────────────────
+// Estados de um item planejado no mês exibido (expenses, simExpenses e plannedItems continuam separados):
+//  ⬜ pendente  : não está em simExpenses e não foi pago -> NÃO entra no saldo projetado
+//  🧪 projetado : existe em simExpenses (plannedId) e ainda não foi quitado por gasto real -> entra no saldo projetado
+//  ✅ pago      : um gasto real (mesma categoria+subcategoria) o quitou -> aparece só como o gasto real
+var _planState={activeSim:[],pending:[],projected:[],orphanSim:[]};
+var _renderedPlanIds=[];
+
+function computePlanState(){
+  var norm=function(x){return String(x||'').toLowerCase().trim();};
+  var settled=getSimSettledIds(_expMes);
+  var activeSim=simExpenses.filter(function(e){return !settled[e.id];});
+  var used=_expMes.map(function(){return false;});
+  var take=function(catId,sub){
+    for(var i=0;i<_expMes.length;i++){
+      if(used[i])continue;
+      var re=_expMes[i];
+      if(re.categoryId===catId&&norm(re.subcategory)===norm(sub)){used[i]=true;return true;}
+    }
+    return false;
+  };
+  // gastos reais já usados por simulados do mês não podem quitar também um item planejado
+  simExpenses.forEach(function(se){take(se.categoryId,se.subcategory);});
+  var simByPlanned={};
+  simExpenses.forEach(function(se){if(se.plannedId!=null)simByPlanned[se.plannedId]=se;});
+  var pending=[],projected=[];
+  var plannedIds={};
+  plannedItems.forEach(function(p){
+    plannedIds[p.id]=true;
+    var se=simByPlanned[p.id];
+    if(se){if(!settled[se.id])projected.push({p:p,se:se});return;}
+    if(take(p.categoryId,plannedSubcategory(p)))return; // pago
+    pending.push(p);
+  });
+  // simulados ativos que não vêm de um item planejado (ex.: criados antes por outro fluxo)
+  var orphanSim=activeSim.filter(function(se){return se.plannedId==null||!plannedIds[se.plannedId];});
+  return {activeSim:activeSim,pending:pending,projected:projected,orphanSim:orphanSim};
+}
+
+function subDisplay(cat,sub){
+  if(!sub)return '';
+  if(sub==='moto')return '🏍️ Moto';
+  if(sub==='carro')return '🚗 Carro';
+  if(sub==='casa'&&cat&&cat.id==='financiamento')return '🏠 Casa';
+  return sub;
+}
+
+// nome curto do item dentro da categoria (a categoria já está no cabeçalho)
+function plannedShortLabel(p){
+  var cat=plannedCat(p);
+  if(!cat)return 'Item';
+  if(cat.livre)return escAttr(p.desc)||'Item sem descrição';
+  if(cat.id==='casa'&&p.sub==='Utilidades'&&p.desc)return 'Utilidades · '+escAttr(p.desc);
+  return escAttr(subDisplay(cat,p.sub))||escAttr(cat.name);
+}
+
+function orphanSimLabel(se){
+  var cat=CATEGORIES.find(function(c){return c.id===se.categoryId;});
+  var parts=[];
+  var sd=subDisplay(cat,se.subcategory);
+  if(sd)parts.push(sd);
+  if(se.casaDesc)parts.push(se.casaDesc);
+  if(se.manutExtra&&se.manutExtra.servico)parts.push(se.manutExtra.servico);
+  if(se.parcela)parts.push('Parcela '+se.parcela);
+  return escAttr(parts.join(' · '))||escAttr(cat?cat.name:'Gasto');
+}
+
+function pendingRowHTML(p){
+  var cat=plannedCat(p);
+  _renderedPlanIds.push(p.id);
+  return '<div class="plan-item">'+
+    '<div class="plan-item-top"><span class="plan-item-name">'+plannedShortLabel(p)+'</span><span class="plan-status">⬜ Pendente</span></div>'+
+    '<div class="plan-item-fields">'+
+      (cat&&cat.livre?'<input type="text" class="plan-input plan-desc" id="planDesc_'+p.id+'" placeholder="Descrição" value="'+escAttr(p.desc)+'" onchange="updatePlannedDesc('+p.id+',this)">':'')+
+      '<input type="text" class="plan-input plan-val" id="planVal_'+p.id+'" inputmode="numeric" placeholder="0,00" value="'+fmtInputVal(p.value)+'" onfocus="this.select()" onchange="updatePlannedValue('+p.id+',this)">'+
+      '<button class="btn-proj" onclick="activatePlanned('+p.id+')">🧪 Projetar</button>'+
+      '<button class="btn-del" title="Duplicar" onclick="duplicatePlanned('+p.id+')">＋</button>'+
+      '<button class="btn-del btn-del-danger" title="Excluir item planejado" onclick="removePlanned('+p.id+')">🗑</button>'+
+    '</div></div>';
+}
+
+function projectedRowHTML(label,se){
+  return '<div class="entry-row plan-row-proj">'+
+    '<div class="entry-row-top"><span class="entry-name">'+label+'</span><span class="entry-value">'+fBRL(se.value)+'</span></div>'+
+    '<div class="entry-row-bottom"><span class="entry-meta"><span class="plan-status proj">🧪 Projetado</span></span>'+
+      '<span class="entry-actions">'+
+        '<button class="btn-proj" onclick="openProjectedExpenseModal('+se.id+')">+ Adicionar</button>'+
+        '<button class="btn-proj-remove" onclick="deleteSimEntry(\'gasto\','+se.id+')">Remover</button>'+
+      '</span></div>'+
+  '</div>';
+}
+
+var projectedExpenseSimId=null;
+var projectedExpenseDirectCategoryId=null;
+
+function hideProjectedSpecificFields(){
+  ['projFieldSubcat','projFieldDesc','projFieldParcela','projFieldCasaSub','projFieldCasaDesc','projFieldVehicle','projFieldFinancing','projFieldGasLitro','projFieldManutServico','projFieldManutOrigem','projFieldReservaSub','projFieldReservaDesc']
+  .forEach(function(id){document.getElementById(id).style.display='none';});
+}
+
+function onProjectedCasaSubChange(){
+  document.getElementById('projFieldCasaDesc').style.display=document.getElementById('projectedExpenseCasaSub').value==='Utilidades'?'flex':'none';
+}
+
+function openProjectedExpenseModal(simId){
+  var se=simExpenses.find(function(e){return e.id===simId;});
+  if(!se)return;
+  var cat=CATEGORIES.find(function(c){return c.id===se.categoryId;});
+  if(!cat)return;
+  projectedExpenseSimId=simId;
+  hideProjectedSpecificFields();
+
+  document.getElementById('projectedExpenseLabel').value=cat.emoji+' '+cat.name;
+  document.getElementById('projectedExpenseDate').valueAsDate=new Date();
+  document.getElementById('projectedExpenseValue').value=se.value.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('projectedExpenseType').value='debit';
+  document.getElementById('projectedExpenseParcela').value=se.parcela||'';
+  document.getElementById('projectedExpenseDesc').value='';
+  document.getElementById('projectedExpenseCasaDesc').value=se.casaDesc||'';
+  document.getElementById('projectedExpenseGasLitro').value=se.gasLitro?se.gasLitro.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}):'';
+  document.getElementById('projectedExpenseManutServico').value=se.manutExtra&&se.manutExtra.servico?se.manutExtra.servico:'';
+  document.getElementById('projectedExpenseManutOrigem').value=se.manutExtra&&se.manutExtra.origem?se.manutExtra.origem:'mes';
+
+  if(cat.id==='reserva'){document.getElementById('projFieldReservaSub').style.display='flex';document.getElementById('projFieldReservaDesc').style.display='flex';document.getElementById('projectedExpenseReservaSub').value='Reserva livre';document.getElementById('projectedExpenseReservaDesc').value='';
+  }else if(cat.id==='casa'){
+    document.getElementById('projFieldCasaSub').style.display='flex';
+    document.getElementById('projectedExpenseCasaSub').value=se.subcategory||'Energia';
+    onProjectedCasaSubChange();
+  }else if(cat.id==='gasolina'){
+    document.getElementById('projFieldVehicle').style.display='flex';
+    document.getElementById('projFieldGasLitro').style.display='flex';
+    document.getElementById('projectedExpenseVehicle').value=se.subcategory==='carro'?'carro':'moto';
+  }else if(cat.id==='manutencao'){
+    document.getElementById('projFieldVehicle').style.display='flex';
+    document.getElementById('projFieldManutServico').style.display='flex';
+    document.getElementById('projFieldManutOrigem').style.display='flex';
+    document.getElementById('projectedExpenseVehicle').value=se.subcategory==='carro'?'carro':'moto';
+  }else if(cat.id==='seguro'){
+    document.getElementById('projFieldVehicle').style.display='flex';
+    document.getElementById('projectedExpenseVehicle').value=se.subcategory==='carro'?'carro':'moto';
+  }else if(cat.id==='financiamento'){
+    document.getElementById('projFieldFinancing').style.display='flex';
+    document.getElementById('projectedExpenseFinancing').value=(se.subcategory==='carro'||se.subcategory==='casa')?se.subcategory:'moto';
+  }else if(cat.sub&&cat.sub.length){
+    var sel=document.getElementById('projectedExpenseSubcat');
+    sel.innerHTML='';
+    cat.sub.forEach(function(x){var o=document.createElement('option');o.value=x;o.textContent=x;sel.appendChild(o);});
+    sel.value=se.subcategory||cat.sub[0];
+    document.getElementById('projFieldSubcat').style.display='flex';
+  }else if(cat.livre){
+    document.getElementById('projFieldDesc').style.display='flex';
+    document.getElementById('projectedExpenseDesc').value=se.subcategory||'';
+  }
+
+  if(cat.parcela)document.getElementById('projFieldParcela').style.display='flex';
+  setupMask('projectedExpenseValue');
+  setupMask('projectedExpenseGasLitro');
+  document.getElementById('projectedExpenseModal').classList.add('active');
+}
+
+function openDirectExpenseModal(catId){
+  var cat=CATEGORIES.find(function(c){return c.id===catId;});
+  if(!cat)return;
+  projectedExpenseSimId=null;
+  projectedExpenseDirectCategoryId=catId;
+  hideProjectedSpecificFields();
+  document.getElementById('projectedExpenseLabel').value=cat.emoji+' '+cat.name;
+  document.getElementById('projectedExpenseDate').valueAsDate=new Date();
+  document.getElementById('projectedExpenseValue').value='';
+  document.getElementById('projectedExpenseType').value='debit';
+  document.getElementById('projectedExpenseParcela').value='';
+  document.getElementById('projectedExpenseDesc').value='';
+  document.getElementById('projectedExpenseCasaDesc').value='';
+  document.getElementById('projectedExpenseGasLitro').value='';
+  document.getElementById('projectedExpenseManutServico').value='';
+  document.getElementById('projectedExpenseManutOrigem').value='mes';
+  if(cat.id==='reserva'){document.getElementById('projFieldReservaSub').style.display='flex';document.getElementById('projFieldReservaDesc').style.display='flex';document.getElementById('projectedExpenseReservaSub').value='Reserva livre';document.getElementById('projectedExpenseReservaDesc').value='';
+  }else if(cat.id==='casa'){
+    document.getElementById('projFieldCasaSub').style.display='flex';
+    document.getElementById('projectedExpenseCasaSub').value='Energia';
+    onProjectedCasaSubChange();
+  }else if(cat.id==='gasolina'){
+    document.getElementById('projFieldVehicle').style.display='flex';document.getElementById('projFieldGasLitro').style.display='flex';document.getElementById('projectedExpenseVehicle').value='moto';
+  }else if(cat.id==='manutencao'){
+    document.getElementById('projFieldVehicle').style.display='flex';document.getElementById('projFieldManutServico').style.display='flex';document.getElementById('projFieldManutOrigem').style.display='flex';document.getElementById('projectedExpenseVehicle').value='moto';
+  }else if(cat.id==='seguro'){
+    document.getElementById('projFieldVehicle').style.display='flex';document.getElementById('projectedExpenseVehicle').value='moto';
+  }else if(cat.id==='financiamento'){
+    document.getElementById('projFieldFinancing').style.display='flex';document.getElementById('projectedExpenseFinancing').value='moto';
+  }else if(cat.sub&&cat.sub.length){
+    var sel=document.getElementById('projectedExpenseSubcat');sel.innerHTML='';
+    cat.sub.forEach(function(x){var o=document.createElement('option');o.value=x;o.textContent=x;sel.appendChild(o);});
+    document.getElementById('projFieldSubcat').style.display='flex';
+  }else if(cat.livre){document.getElementById('projFieldDesc').style.display='flex';}
+  if(cat.parcela)document.getElementById('projFieldParcela').style.display='flex';
+  setupMask('projectedExpenseValue');setupMask('projectedExpenseGasLitro');
+  document.getElementById('projectedExpenseModal').classList.add('active');
+}
+
+function closeProjectedExpenseModal(){
+  projectedExpenseSimId=null;
+  projectedExpenseDirectCategoryId=null;
+  document.getElementById('projectedExpenseModal').classList.remove('active');
+}
+
+async function saveProjectedAsExpense(){
+  var isDirect=!!projectedExpenseDirectCategoryId;
+  var se=isDirect?null:simExpenses.find(function(e){return e.id===projectedExpenseSimId;});
+  if(!isDirect&&!se)return;
+  var cat=CATEGORIES.find(function(c){return c.id===(isDirect?projectedExpenseDirectCategoryId:se.categoryId);});
+  if(!cat)return;
+
+  var date=document.getElementById('projectedExpenseDate').value;
+  var value=parseVal(document.getElementById('projectedExpenseValue').value);
+  var type=document.getElementById('projectedExpenseType').value;
+  if(!date||value<=0){alert('Preencha data e valor.');return;}
+
+  var sub=null,parcela=null,gasLitro=null,manutExtra=null,casaDesc=null;
+
+  if(cat.id==='reserva'){sub=document.getElementById('projectedExpenseReservaSub').value;var reserveDesc=document.getElementById('projectedExpenseReservaDesc').value.trim();if(!reserveDesc){alert('Adicione uma descrição.');return;}
+  }else if(cat.id==='gasolina'){
+    sub=document.getElementById('projectedExpenseVehicle').value;
+    gasLitro=parseVal(document.getElementById('projectedExpenseGasLitro').value)||null;
+  }else if(cat.id==='manutencao'){
+    sub=document.getElementById('projectedExpenseVehicle').value;
+    var servico=document.getElementById('projectedExpenseManutServico').value.trim();
+    var origem=document.getElementById('projectedExpenseManutOrigem').value;
+    if(!servico){alert('Descreva o serviço realizado.');return;}
+    manutExtra={servico:servico,origem:origem};
+  }else if(cat.id==='casa'){
+    sub=document.getElementById('projectedExpenseCasaSub').value;
+    if(sub==='Utilidades'){
+      casaDesc=document.getElementById('projectedExpenseCasaDesc').value.trim();
+      if(!casaDesc){alert('Descreva o item de Utilidades.');return;}
+    }
+  }else if(cat.id==='seguro'){
+    sub=document.getElementById('projectedExpenseVehicle').value;
+  }else if(cat.id==='financiamento'){
+    sub=document.getElementById('projectedExpenseFinancing').value;
+  }else if(cat.sub&&cat.sub.length){
+    sub=document.getElementById('projectedExpenseSubcat').value;
+  }else if(cat.livre){
+    sub=document.getElementById('projectedExpenseDesc').value.trim();
+    if(!sub){alert('Adicione uma descrição.');return;}
+  }
+
+  if(cat.parcela)parcela=document.getElementById('projectedExpenseParcela').value.trim()||null;
+
+  var exp={id:Date.now(),categoryId:cat.id,subcategory:sub,parcela:parcela,date:date,value:value,type:type};
+  var reserveIncome=null;if(cat.id==='reserva'){exp.reserveDesc=reserveDesc;exp.reservePairId=exp.id;reserveIncome=makeReserveIncome(exp);incomes.push(reserveIncome);}
+  if(gasLitro)exp.gasLitro=gasLitro;
+  if(manutExtra)exp.manutExtra=manutExtra;
+  if(casaDesc)exp.casaDesc=casaDesc;
+
+  expenses.push(exp);
+  if(!isDirect)simExpenses=simExpenses.filter(function(e){return e.id!==projectedExpenseSimId;});
+  saveLocal();
+  if(!isDirect)saveSimulacao();
+  closeProjectedExpenseModal();renderResume(true);
+
+  setSyncDot('syncing');
+  try{await saveExpenseToDB(exp);if(reserveIncome)await saveIncomeToDB(reserveIncome);setSyncDot('ok');}
+  catch(err){console.error('Erro ao salvar gasto:',err);setSyncDot('err');}
+}
+
+// HTML dos itens planejados (pendentes + projetados) de uma categoria; '' se não houver nenhum
+function buildCategoryPlanHTML(cat){
+  var html='';
+  var projById={};
+  _planState.projected.forEach(function(x){projById[x.p.id]=x.se;});
+  var pendIds={};
+  _planState.pending.forEach(function(p){pendIds[p.id]=true;});
+  plannedItems.forEach(function(p){
+    if(p.categoryId!==cat.id)return;
+    if(pendIds[p.id])html+=pendingRowHTML(p);
+    else if(projById[p.id])html+=projectedRowHTML(plannedShortLabel(p),projById[p.id]);
+  });
+  _planState.orphanSim.forEach(function(se){
+    if(se.categoryId!==cat.id)return;
+    html+=projectedRowHTML(orphanSimLabel(se),se);
+  });
+  return html;
+}
+
+// _expMes: gastos reais do mês atualmente exibido, atualizado pelo renderResume().
+// Usado por renderPlanejamento() para achar a correspondência simulado↔real,
+// mesmo quando chamado fora do renderResume (addSimEntry/deleteSimEntry/clearSimulacao).
+var _expMes=[];
+
+// getSimSettledIds: casa 1 para 1 cada gasto simulado com um gasto real do mês
+// (mesma categoryId + mesma subcategory/item, sem exigir valor igual). Um gasto
+// real só quita um simulado; não deleta nada, só marca como "quitado" para esta renderização.
+function getSimSettledIds(expReal){
+  var usedReal=expReal.map(function(){return false;});
+  var settled={};
+  simExpenses.forEach(function(se){
+    for(var i=0;i<expReal.length;i++){
+      if(usedReal[i])continue;
+      var re=expReal[i];
+      if(re.categoryId===se.categoryId&&String(re.subcategory||'').toLowerCase().trim()===String(se.subcategory||'').toLowerCase().trim()){
+        usedReal[i]=true;
+        settled[se.id]=true;
+        break;
+      }
+    }
+  });
+  return settled;
+}
+
+// renderPlanejamento: calcula o estado do planejamento do mês e atualiza o card "Saldo projetado".
+// A exibição dos itens (pendentes/projetados) fica dentro de cada categoria, em renderResume().
+// Só itens projetados ativos (simExpenses não quitados por gasto real) entram no saldo projetado; pendentes não.
+function renderPlanejamento(){
+  _planState=computePlanState();
+
+  _simGastos=_planState.activeSim.reduce(function(s,e){return s+e.value;},0);
+  _simEntradas=simIncomes.reduce(function(s,e){return s+e.value;},0);
+  _simSaldoAtual=_tS;
+  _simSaldoProjetado=_simSaldoAtual+_simEntradas-_simGastos;
+
+  document.getElementById('resumoSaldoProjetado').textContent=fBRL(_simSaldoProjetado);
+  var cardProj=document.getElementById('cardSaldoProjetado');
+  cardProj.className='mini-card card-saldo card-saldo-projetado'+(_simSaldoProjetado>0?' positivo':(_simSaldoProjetado<0?' negativo':''));
+  var projDot=document.getElementById('saldoProjetadoDot');
+  if(projDot)projDot.className='saldo-status-dot'+(_simSaldoProjetado>0?' positivo':(_simSaldoProjetado<0?' negativo':''));
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+document.getElementById('fData').valueAsDate = new Date();
+document.getElementById('fEntradaData').valueAsDate = new Date();
+populateCategorySelect();
+populateSimCategorySelect();
+setupMask('fValor'); setupMask('fEntradaValor'); setupMask('simValor'); setupMask('plannedFreeValue');
+onSimTipoChange();
+updateMonthBar();
+loadSimulacao();
+loadPlanejados();
+
+(async function() {
+  setSyncDot('syncing');
+  await loadFromDB();
+  await migrateLegacyCasa();
+  await migrateLegacyFinanciamento();
+  document.getElementById('loadingScreen').classList.add('done');
+  renderResume();
+  updateEyeGlobal();
+})();
+
+// ── TABS ─────────────────────────────────────────────────────────────────────
+function switchTab(i) {
+  document.querySelectorAll('.tab-button').forEach(function(b,j){b.classList.toggle('active',i===j);});
+  document.querySelectorAll('.tab-content').forEach(function(c,j){c.classList.toggle('active',i===j);});
+  // month-bar só no Resumo e Anual
+  var monthBar=document.getElementById('monthBar');
+  monthBar.style.display=(i===0||i===3)?'flex':'none';
+  if(i===0)renderResume();
+  if(i===2)renderEntradas();
+  if(i===3)renderAnual();
+}
+
+// ── MÊS/ANO ──────────────────────────────────────────────────────────────────
+function changeMonth(d){currentMonth+=d;if(currentMonth>11){currentMonth=0;currentYear++;}if(currentMonth<0){currentMonth=11;currentYear--;}updateMonthBar();renderResume();renderEntradas();}
+function changeYear(d){currentYear+=d;updateMonthBar();renderResume();renderEntradas();}
+function updateMonthBar(){document.getElementById('monthLabel').textContent=MONTH_NAMES[currentMonth];document.getElementById('yearLabel').textContent=currentYear;}
+function monthKey(){return currentYear+'-'+String(currentMonth+1).padStart(2,'0');}
+function changeAnnualYear(d){annualYear+=d;renderAnual();}
+
+// ── VISIBILIDADE ──────────────────────────────────────────────────────────────
+function toggleValuesVisibility(){valuesVisible=!valuesVisible;updateEyeGlobal();updateTopCards();}
+function updateEyeGlobal(){document.getElementById('btnEyeGlobal').textContent=valuesVisible?'👁':'🙈';}
+function maskVal(str){return valuesVisible?str:'••••••';}
+
+// ── MÁSCARA ───────────────────────────────────────────────────────────────────
+function setupMask(id){
+  var el=document.getElementById(id);
+  if(!el||el._masked)return;
+  el._masked=true;
+  el.addEventListener('input',function(){
+    var d=this.value.replace(/\D/g,'');
+    if(!d){this.value='';return;}
+    this.value=(parseInt(d,10)/100).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  });
+}
+function parseVal(s){if(!s)return 0;return parseFloat(s.replace(/\./g,'').replace(',','.'))||0;}
+function fBRL(v){var s=v.toFixed(2);var parts=s.split('.');var intPart=parts[0].replace(/^-/,'');var neg=parts[0].charAt(0)==='-';intPart=intPart.replace(/\B(?=(\d{3})+(?!\d))/g,'.');return (neg?'-':'')+'R$ '+intPart+','+parts[1];}
+function fDate(s){var p=s.split('-');return p[2]+'/'+p[1];}
+
+// ── FORM GASTO ────────────────────────────────────────────────────────────────
+function populateCategorySelect(){
+  var sel=document.getElementById('fCategoria');
+  CATEGORIES.forEach(function(c){var o=document.createElement('option');o.value=c.id;o.textContent=c.emoji+' '+c.name;sel.appendChild(o);});
+}
+function onCategoriaChange(){
+  var catId=document.getElementById('fCategoria').value;
+  var cat=CATEGORIES.find(function(c){return c.id===catId;});
+  document.getElementById('fieldSubcat').style.display='none';
+  document.getElementById('fieldSubcatLivre').style.display='none';
+  document.getElementById('fieldParcela').style.display='none';
+  document.getElementById('fieldGasolinaVeiculo').style.display='none';
+  document.getElementById('fieldGasolinaLitro').style.display='none';
+  document.getElementById('fieldManutVeiculo').style.display='none';
+  document.getElementById('fieldManutServico').style.display='none';
+  document.getElementById('fieldManutOrigem').style.display='none';
+  document.getElementById('fieldCasaSub').style.display='none';
+  document.getElementById('fieldCasaDesc').style.display='none';
+  document.getElementById('fieldSeguroVeiculo').style.display='none';
+  document.getElementById('fieldFinanciamentoItem').style.display='none';
+  document.getElementById('fieldReservaSub').style.display='none';
+  document.getElementById('fieldReservaDesc').style.display='none';
+  if(!cat)return;
+  if(catId==='reserva'){document.getElementById('fieldReservaSub').style.display='flex';document.getElementById('fieldReservaDesc').style.display='flex';return;}
+  if(catId==='seguro'){
+    document.getElementById('fieldSeguroVeiculo').style.display='block';
+    return;
+  }
+  if(catId==='financiamento'){
+    document.getElementById('fieldFinanciamentoItem').style.display='block';
+    return;
+  }
+  if(catId==='gasolina'){
+    document.getElementById('fieldGasolinaVeiculo').style.display='block';
+    document.getElementById('fieldGasolinaLitro').style.display='flex';
+    setupMask('fGasLitro');
+    return;
+  }
+  if(catId==='manutencao'){
+    document.getElementById('fieldManutVeiculo').style.display='block';
+    document.getElementById('fieldManutServico').style.display='flex';
+    document.getElementById('fieldManutOrigem').style.display='flex';
+    return;
+  }
+  if(catId==='casa'){
+    document.getElementById('fieldCasaSub').style.display='flex';
+    onCasaSubChange();
+    return;
+  }
+  if(cat.sub.length>0){
+    var sel=document.getElementById('fSubcategoria');sel.innerHTML='';
+    cat.sub.forEach(function(s){var o=document.createElement('option');o.value=s;o.textContent=s;sel.appendChild(o);});
+    document.getElementById('fieldSubcat').style.display='flex';
+  }else if(cat.livre){document.getElementById('fieldSubcatLivre').style.display='flex';}
+  if(cat.parcela)document.getElementById('fieldParcela').style.display='flex';
+}
+
+function selectVeiculo(v){
+  document.getElementById('fGasVeiculo').value=v;
+  document.getElementById('gasMotoBtn').classList.toggle('active',v==='moto');
+  document.getElementById('gasCarroBtn').classList.toggle('active',v==='carro');
+}
+
+function selectFinanciamentoItem(v){
+  document.getElementById('fFinanciamentoItem').value=v;
+  document.getElementById('financMotoBtn').classList.toggle('active',v==='moto');
+  document.getElementById('financCarroBtn').classList.toggle('active',v==='carro');
+  document.getElementById('financCasaBtn').classList.toggle('active',v==='casa');
+}
+
+function selectSeguroVeiculo(v){
+  document.getElementById('fSeguroVeiculo').value=v;
+  document.getElementById('seguroMotoBtn').classList.toggle('active',v==='moto');
+  document.getElementById('seguroCarroBtn').classList.toggle('active',v==='carro');
+}
+
+function selectManutVeiculo(v){
+  document.getElementById('fManutVeiculo').value=v;
+  document.getElementById('manutMotoBtn').classList.toggle('active',v==='moto');
+  document.getElementById('manutCarroBtn').classList.toggle('active',v==='carro');
+}
+
+function onCasaSubChange(){
+  var v=document.getElementById('fCasaSub').value;
+  document.getElementById('fieldCasaDesc').style.display=v==='Utilidades'?'flex':'none';
+}
+
+async function addExpense(){
+  var catId=document.getElementById('fCategoria').value;
+  var date=document.getElementById('fData').value;
+  var value=parseVal(document.getElementById('fValor').value);
+  var tipo=document.getElementById('fTipo').value;
+  var cat=CATEGORIES.find(function(c){return c.id===catId;});
+  if(!catId||!date||value<=0){alert('Preencha todos os campos.');return;}
+  var sub=null;var parcela=null;var gasLitro=null;var manutExtra=null;var casaDesc=null;
+  if(catId==='reserva'){
+    sub=document.getElementById('fReservaSub').value;
+    var reserveDesc=document.getElementById('fReservaDesc').value.trim();
+    if(!reserveDesc){alert('Adicione uma descrição.');return;}
+  }else if(catId==='gasolina'){
+    sub=document.getElementById('fGasVeiculo').value;
+    gasLitro=parseVal(document.getElementById('fGasLitro').value)||null;
+  }else if(catId==='manutencao'){
+    sub=document.getElementById('fManutVeiculo').value;
+    var servico=document.getElementById('fManutServico').value.trim();
+    var origem=document.getElementById('fManutOrigem').value;
+    if(!servico){alert('Descreva o serviço realizado.');return;}
+    manutExtra={servico:servico,origem:origem};
+  }else if(catId==='casa'){
+    sub=document.getElementById('fCasaSub').value;
+    if(sub==='Utilidades'){
+      casaDesc=document.getElementById('fCasaDesc').value.trim();
+      if(!casaDesc){alert('Descreva o item de Utilidades.');return;}
+    }
+  }else if(catId==='seguro'){
+    sub=document.getElementById('fSeguroVeiculo').value;
+  }else if(catId==='financiamento'){
+    sub=document.getElementById('fFinanciamentoItem').value;
+  }else if(cat.sub.length>0){
+    sub=document.getElementById('fSubcategoria').value;
+  }else if(cat.livre){
+    sub=document.getElementById('fSubcatLivre').value.trim();
+    if(!sub){alert('Adicione uma descrição.');return;}
+  }
+  if(cat.parcela)parcela=document.getElementById('fParcela').value.trim()||null;
+  var exp={id:Date.now(),categoryId:catId,subcategory:sub,parcela:parcela,date:date,value:value,type:tipo};
+  var reserveIncome=null;
+  if(catId==='reserva'){exp.reserveDesc=reserveDesc;exp.reservePairId=exp.id;reserveIncome=makeReserveIncome(exp);incomes.push(reserveIncome);}
+  if(gasLitro)exp.gasLitro=gasLitro;
+  if(manutExtra)exp.manutExtra=manutExtra;
+  if(casaDesc)exp.casaDesc=casaDesc;
+  expenses.push(exp);
+  saveLocal();
+  renderResume();
+  // limpa form
+  document.getElementById('fCategoria').value='';
+  document.getElementById('fValor').value='';
+  document.getElementById('fGasLitro').value='';
+  document.getElementById('fData').valueAsDate=new Date();
+  document.getElementById('fTipo').value='debit';
+  document.getElementById('fieldSubcat').style.display='none';
+  document.getElementById('fieldSubcatLivre').style.display='none';
+  document.getElementById('fieldParcela').style.display='none';
+  document.getElementById('fieldGasolinaVeiculo').style.display='none';
+  document.getElementById('fieldGasolinaLitro').style.display='none';
+  document.getElementById('fieldManutVeiculo').style.display='none';
+  document.getElementById('fieldManutServico').style.display='none';
+  document.getElementById('fieldManutOrigem').style.display='none';
+  document.getElementById('fieldCasaSub').style.display='none';
+  document.getElementById('fieldCasaDesc').style.display='none';
+  document.getElementById('fieldSeguroVeiculo').style.display='none';
+  document.getElementById('fieldFinanciamentoItem').style.display='none';
+  document.getElementById('fieldReservaSub').style.display='none';document.getElementById('fieldReservaDesc').style.display='none';
+  document.getElementById('fReservaSub').value='Reserva livre';document.getElementById('fReservaDesc').value='';
+  document.getElementById('fSubcatLivre').value='';
+  document.getElementById('fParcela').value='';
+  document.getElementById('fManutServico').value='';
+  document.getElementById('fManutOrigem').value='mes';
+  document.getElementById('fCasaSub').value='Energia';
+  document.getElementById('fCasaDesc').value='';
+  selectVeiculo('moto');
+  selectManutVeiculo('moto');
+  selectSeguroVeiculo('moto');
+  selectFinanciamentoItem('moto');
+  // salva na nuvem
+  setSyncDot('syncing');
+  try { await saveExpenseToDB(exp);if(reserveIncome)await saveIncomeToDB(reserveIncome);setSyncDot('ok'); } catch(e) { setSyncDot('err'); }
+}
+
+// ── FORM ENTRADA ──────────────────────────────────────────────────────────────
+function onEntradaTipoChange(){document.getElementById('fieldEntradaDesc').style.display=document.getElementById('fEntradaTipo').value==='outro'?'flex':'none';}
+
+async function addEntrada(){
+  var tipo=document.getElementById('fEntradaTipo').value;
+  var date=document.getElementById('fEntradaData').value;
+  var value=parseVal(document.getElementById('fEntradaValor').value);
+  var desc=tipo==='outro'?document.getElementById('fEntradaDesc').value.trim():'';
+  if(!date||value<=0){alert('Preencha todos os campos.');return;}
+  if(tipo==='outro'&&!desc){alert('Adicione uma descrição.');return;}
+  var inc={id:Date.now(),type:tipo,date:date,value:value,desc:desc};
+  incomes.push(inc);
+  saveLocal();
+  renderEntradas();renderResume();
+  document.getElementById('fEntradaValor').value='';
+  document.getElementById('fEntradaData').valueAsDate=new Date();
+  document.getElementById('fEntradaDesc').value='';
+  document.getElementById('fEntradaTipo').value='salario';
+  document.getElementById('fieldEntradaDesc').style.display='none';
+  setSyncDot('syncing');
+  try { await saveIncomeToDB(inc); setSyncDot('ok'); } catch(e) { setSyncDot('err'); }
+}
+
+async function deleteEntrada(id){
+  var target=incomes.find(function(e){return e.id===id;});if(target&&target.type==='reserva'&&target.automatic===true)return;
+  if(!confirm('Deletar esta entrada?'))return;
+  incomes=incomes.filter(function(e){return e.id!==id;});
+  saveLocal();renderEntradas();renderResume();
+  setSyncDot('syncing');
+  try { await deleteIncomeFromDB(id); setSyncDot('ok'); } catch(e) { setSyncDot('err'); }
+}
+
+// ── OCULTAR ───────────────────────────────────────────────────────────────────
+async function toggleHide(catId){
+  var idx=hiddenCats.indexOf(catId);
+  if(idx>=0)hiddenCats.splice(idx,1);else hiddenCats.push(catId);
+  saveLocal();renderResume();
+  setSyncDot('syncing');
+  try { await saveHiddenToDB(); setSyncDot('ok'); } catch(e) { setSyncDot('err'); }
+}
+function toggleShowHidden(){showingHidden=!showingHidden;renderResume();}
+
+// ── TOP CARDS ─────────────────────────────────────────────────────────────────
+var _tG=0,_tE=0,_tS=0;
+function updateTopCards(){
+  document.getElementById('resumoGasto').textContent=maskVal(fBRL(_tG));
+  document.getElementById('resumoEntrada').textContent=maskVal(fBRL(_tE));
+  document.getElementById('resumoSaldo').textContent=maskVal(fBRL(_tS));
+}
+
+// ── RESUMO ────────────────────────────────────────────────────────────────────
+function renderResume(keepOpen){
+  var key=monthKey();
+  var exp=expenses.filter(function(e){return e.date.startsWith(key);});
+  _expMes=exp;
+  var inc=incomes.filter(function(e){return e.date.startsWith(key);});
+  _tG=exp.reduce(function(s,e){return s+e.value;},0);
+  _tE=inc.reduce(function(s,e){return s+e.value;},0);
+  _tS=_tE-_tG;
+  updateTopCards();
+  var cs=document.getElementById('cardSaldo');
+  cs.className='mini-card card-saldo';
+  if(_tS>0)cs.classList.add('positivo');
+  if(_tS<0)cs.classList.add('negativo');
+  loadSimMonth();
+  renderPlanejamento(); // calcula _planState e o saldo projetado antes de montar as categorias
+  var list=document.getElementById('categoryList');
+  var openCats={};
+  if(keepOpen)list.querySelectorAll('.category-item.open').forEach(function(el){openCats[el.getAttribute('data-cat')]=true;});
+  list.innerHTML='';
+  _renderedPlanIds=[];
+  CATEGORIES.forEach(function(cat){
+    var isHidden=hiddenCats.indexOf(cat.id)>=0;
+    if(isHidden&&!showingHidden)return;
+    var catExp=exp.filter(function(e){return e.categoryId===cat.id;});
+    var catTotal=catExp.reduce(function(s,e){return s+e.value;},0);
+    var item=document.createElement('div');
+    item.className='category-item'+(isHidden?' cat-force-show':'');
+    item.setAttribute('data-cat',cat.id);
+    if(openCats[cat.id]&&!isHidden)item.classList.add('open');
+    var catProj=_planState.activeSim.filter(function(e){return e.categoryId===cat.id;}).reduce(function(s,e){return s+e.value;},0);
+    var projHTML=catProj>0?'<span class="cat-proj"> + '+fBRL(catProj)+'</span>':'';
+    var planHTML=buildCategoryPlanHTML(cat);
+    var hdr=document.createElement('div');hdr.className='category-header';
+    if(!isHidden)hdr.onclick=function(){item.classList.toggle('open');};
+    hdr.innerHTML='<span class="cat-emoji">'+cat.emoji+'</span><span class="cat-name">'+cat.name+'</span><span class="cat-total'+(catTotal===0?' zero':'')+'">'+fBRL(catTotal)+projHTML+'</span>'+(isHidden&&showingHidden?'<button class="btn-reactivate-category" type="button">Reativar</button>':'<span class="cat-chevron">▼</span>');
+    if(isHidden&&showingHidden){var reactivateBtn=hdr.querySelector('.btn-reactivate-category');reactivateBtn.onclick=function(ev){ev.stopPropagation();toggleHide(cat.id);};}
+    var det=document.createElement('div');det.className='category-details';
+    if(catExp.length){var realTitle=document.createElement('div');realTitle.className='detail-section-title';realTitle.textContent='Gastos reais';det.appendChild(realTitle);}
+    if(catExp.length===0){
+      if(!planHTML)det.innerHTML='<div class="empty-cat">Nenhum lançamento neste mês</div>';
+    }else if(cat.id==='reserva'){
+      ['Reserva livre','Reserva de emergência'].forEach(function(subLabel){
+        var subExp=catExp.filter(function(e){return e.subcategory===subLabel;});if(!subExp.length)return;
+        var subTotal=subExp.reduce(function(sum,e){return sum+e.value;},0);var sec=document.createElement('div');sec.className='subcategory-section';
+        var html='<div class="subcategory-title">'+subLabel+'</div>';subExp.forEach(function(e){html+=entryHTML(e,e.reserveDesc||'');});
+        if(subExp.length>1)html+='<div class="sub-total-row"><span>Total '+subLabel+'</span><span>'+fBRL(subTotal)+'</span></div>';sec.innerHTML=html;det.appendChild(sec);
+      });
+    }else if(cat.sub.length>0){
+      cat.sub.forEach(function(sub){
+        var subExp=catExp.filter(function(e){return e.subcategory===sub;});
+        if(!subExp.length)return;
+        var subTotal=subExp.reduce(function(s,e){return s+e.value;},0);
+        var sec=document.createElement('div');sec.className='subcategory-section';
+        var html='<div class="subcategory-title">'+sub+'</div>';
+        subExp.forEach(function(e){html+=entryHTML(e,sub,true);});
+        if(subExp.length>1)html+='<div class="sub-total-row"><span>Total '+sub+'</span><span>'+fBRL(subTotal)+'</span></div>';
+        sec.innerHTML=html;det.appendChild(sec);
+      });
+    }else if(cat.id==='seguro'){
+      // seguro: agrupa por veículo (moto/carro); compatível com registros antigos 'Moto'/'Carro'
+      var veiculosSeg=['moto','carro'];
+      veiculosSeg.forEach(function(v){
+        var vExp=catExp.filter(function(e){return (e.subcategory||'').toLowerCase()===v;});
+        if(!vExp.length)return;
+        var vTotal=vExp.reduce(function(s,e){return s+e.value;},0);
+        var sec=document.createElement('div');sec.className='subcategory-section';
+        var vLabel=v==='moto'?'🏍️ Moto':'🚗 Carro';
+        var html='<div class="subcategory-title">'+vLabel+'</div>';
+        vExp.forEach(function(e){html+=entryHTML(e,vLabel,true);});
+        if(vExp.length>1)html+='<div class="sub-total-row"><span>Total '+vLabel+'</span><span>'+fBRL(vTotal)+'</span></div>';
+        sec.innerHTML=html;det.appendChild(sec);
+      });
+    }else if(cat.id==='financiamento'){
+      // financiamento: agrupa por item (moto/carro/casa)
+      var itensFin=['moto','carro','casa'];
+      itensFin.forEach(function(v){
+        var vExp=catExp.filter(function(e){return e.subcategory===v;});
+        if(!vExp.length)return;
+        var vTotal=vExp.reduce(function(s,e){return s+e.value;},0);
+        var sec=document.createElement('div');sec.className='subcategory-section';
+        var vLabel=v==='moto'?'🏍️ Moto':(v==='carro'?'🚗 Carro':'🏠 Casa');
+        var html='<div class="subcategory-title">'+vLabel+'</div>';
+        vExp.forEach(function(e){html+=entryHTML(e,vLabel,true);});
+        if(vExp.length>1)html+='<div class="sub-total-row"><span>Total '+vLabel+'</span><span>'+fBRL(vTotal)+'</span></div>';
+        sec.innerHTML=html;det.appendChild(sec);
+      });
+    }else if(cat.id==='casa'){
+      // Casa: agrupa por subcategoria (Energia/Água/Internet/Condomínio/Utilidades)
+      CASA_SUBCATS.forEach(function(subLabel){
+        var subExp=catExp.filter(function(e){return e.subcategory===subLabel;});
+        if(!subExp.length)return;
+        var subTotal=subExp.reduce(function(s,e){return s+e.value;},0);
+        var sec=document.createElement('div');sec.className='subcategory-section';
+        var html='<div class="subcategory-title">'+subLabel+'</div>';
+        subExp.forEach(function(e){
+          if(subLabel==='Utilidades'){
+            html+=entryHTML(e,e.casaDesc||'');
+          }else{
+            html+=entryHTML(e,subLabel,true);
+          }
+        });
+        if(subExp.length>1)html+='<div class="sub-total-row"><span>Total '+subLabel+'</span><span>'+fBRL(subTotal)+'</span></div>';
+        sec.innerHTML=html;det.appendChild(sec);
+      });
+    }else if(cat.id==='manutencao'){
+      // manutenção: agrupa por veículo com card mostrando serviço e origem
+      var veiculos=['moto','carro'];
+      veiculos.forEach(function(v){
+        var vExp=catExp.filter(function(e){return e.subcategory===v;});
+        if(!vExp.length)return;
+        var vTotal=vExp.reduce(function(s,e){return s+e.value;},0);
+        var sec=document.createElement('div');sec.className='subcategory-section';
+        var vLabel=v==='moto'?'🏍️ Moto':'🚗 Carro';
+        var html='<div class="subcategory-title">'+vLabel+'</div>';
+        vExp.forEach(function(e){
+          var servico=e.manutExtra?e.manutExtra.servico:'';
+          html+=entryHTML(e,servico||vLabel,!servico);
+        });
+        if(vExp.length>1)html+='<div class="sub-total-row"><span>Total '+vLabel+'</span><span>'+fBRL(vTotal)+'</span></div>';
+        sec.innerHTML=html;det.appendChild(sec);
+      });
+    }else if(cat.id==='gasolina'){
+      // gasolina: agrupa por veículo (moto/carro)
+      var veiculos=['moto','carro'];
+      veiculos.forEach(function(v){
+        var vExp=catExp.filter(function(e){return e.subcategory===v;});
+        if(!vExp.length)return;
+        var vTotal=vExp.reduce(function(s,e){return s+e.value;},0);
+        var sec=document.createElement('div');sec.className='subcategory-section';
+        var vLabel=v==='moto'?'🏍️ Moto':'🚗 Carro';
+        var html='<div class="subcategory-title">'+vLabel+'</div>';
+        vExp.forEach(function(e){html+=entryHTML(e,vLabel,true);});
+        if(vExp.length>1)html+='<div class="sub-total-row"><span>Total '+vLabel+'</span><span>'+fBRL(vTotal)+'</span></div>';
+        sec.innerHTML=html;det.appendChild(sec);
+      });
+      // entradas sem veículo definido
+      var semV=catExp.filter(function(e){return e.subcategory!=='moto'&&e.subcategory!=='carro';});
+      semV.forEach(function(e){var d=document.createElement('div');d.innerHTML=entryHTML(e,cat.name);det.appendChild(d.firstChild);});
+    }else if(cat.livre||cat.parcela){
+      // descrição livre: alimentação, cuidados pessoais, weed, educação, cartão-terceiros, gastos diversos
+      catExp.forEach(function(e){var d=document.createElement('div');d.innerHTML=entryHTML(e,e.subcategory);det.appendChild(d.firstChild);});
+      var total=catExp.reduce(function(s,e){return s+e.value;},0);
+      if(catExp.length>1){var tr=document.createElement('div');tr.className='sub-total-row';tr.innerHTML='<span>Total</span><span>'+fBRL(total)+'</span>';det.appendChild(tr);}
+    }else{
+      catExp.forEach(function(e){var d=document.createElement('div');d.innerHTML=entryHTML(e,cat.name);det.appendChild(d.firstChild);});
+    }
+    if(planHTML){
+      var planTitle=document.createElement('div');planTitle.className='detail-section-title';planTitle.textContent='Planejamento';det.appendChild(planTitle);
+      var psec=document.createElement('div');psec.className='subcategory-section plan-section';
+      psec.innerHTML=planHTML;
+      det.appendChild(psec);
+    }
+    var actionRow=document.createElement('div');actionRow.className='plan-action-row';
+    var addPlanBtn=document.createElement('button');addPlanBtn.className='btn-plan-new';addPlanBtn.textContent='+ Nova previsão';addPlanBtn.onclick=function(){addPlannedForCategory(cat.id);};
+    var addExpenseBtn=document.createElement('button');addExpenseBtn.className='btn-plan-new btn-expense-new';addExpenseBtn.textContent='+ Novo gasto';addExpenseBtn.onclick=function(){openDirectExpenseModal(cat.id);};
+    if(cat.id!=='reserva')actionRow.appendChild(addPlanBtn);actionRow.appendChild(addExpenseBtn);det.appendChild(actionRow);
+    var hideBtn=document.createElement('button');hideBtn.className='btn-hide-category';hideBtn.textContent='Ocultar categoria';hideBtn.style.display=isHidden?'none':'block';hideBtn.onclick=function(ev){ev.stopPropagation();toggleHide(cat.id);};det.appendChild(hideBtn);
+    item.appendChild(hdr);item.appendChild(det);list.appendChild(item);
+  });
+  _renderedPlanIds.forEach(function(id){setupMask('planVal_'+id);});
+  var btnH=document.getElementById('btnManageHidden');
+  if(hiddenCats.length>0){
+    btnH.style.display='block';
+    btnH.textContent=showingHidden?'🙈 Ocultar lista ('+hiddenCats.length+' oculta'+(hiddenCats.length>1?'s':'')+')'
+      :'👁 Gerenciar categorias ocultas ('+hiddenCats.length+')';
+  }else{btnH.style.display='none';showingHidden=false;}
+}
+
+function entryHTML(e, name, grouped){
+  // Layout visual do Resumo. Em grupos, evita repetir o nome/emoji da subcategoria em cada lançamento.
+  var typeLabel=e.type==='card'?'Crédito':'Débito';
+  var itemName=name||e.subcategory||'—';
+  var metaParts=[fDate(e.date),typeLabel];
+  if(e.parcela) metaParts.push('Parcela '+e.parcela);
+  if(e.gasLitro) metaParts.push('R$'+e.gasLitro.toFixed(2).replace('.',',')+'/L');
+  if(e.manutExtra&&e.manutExtra.origem==='reserva') metaParts.push('🏦 Reserva');
+  var actions='<button class="btn-edit-entry" onclick="openEditModal('+e.id+')">✏️</button><button class="btn-del" onclick="deleteExpense('+e.id+')">✕</button>';
+  if(grouped)return '<div class="entry-row grouped-entry"><div class="entry-row-top"><span class="entry-name">'+metaParts.join(' · ')+'</span><span class="entry-value">'+fBRL(e.value)+'</span></div><div class="entry-row-bottom"><span class="entry-actions">'+actions+'</span></div></div>';
+  return '<div class="entry-row"><div class="entry-row-top"><span class="entry-name">'+itemName+'</span><span class="entry-value">'+fBRL(e.value)+'</span></div><div class="entry-row-bottom"><span class="entry-meta">'+metaParts.join(' · ')+'</span><span class="entry-actions">'+actions+'</span></div></div>';
+}
+
+async function deleteExpense(id){
+  if(!confirm('Deletar?'))return;
+  var exp=expenses.find(function(e){return e.id===id;});var paired=exp&&exp.categoryId==='reserva'?findReserveIncome(exp.reservePairId||exp.id):null;
+  expenses=expenses.filter(function(e){return e.id!==id;});if(paired)incomes=incomes.filter(function(i){return i.id!==paired.id;});
+  saveLocal();renderResume();renderEntradas();setSyncDot('syncing');
+  try { if(paired)await deleteIncomeFromDB(paired.id);await deleteExpenseFromDB(id);setSyncDot('ok'); } catch(e) { setSyncDot('err'); }
+}
+
+// ── EDITAR GASTO ──────────────────────────────────────────────────────────────
+function populateEditCats(){
+  var sel=document.getElementById('eCat');
+  if(sel.options.length>1)return;
+  CATEGORIES.forEach(function(c){var o=document.createElement('option');o.value=c.id;o.textContent=c.emoji+' '+c.name;sel.appendChild(o);});
+}
+function openEditModal(id){
+  var exp=expenses.find(function(e){return e.id===id;});
+  if(!exp)return;
+  editingId=id;populateEditCats();setupMask('eValor');
+  document.getElementById('eCat').value=exp.categoryId;
+  document.getElementById('eData').value=exp.date;
+  document.getElementById('eTipo').value=exp.type;
+  document.getElementById('eValor').value=exp.value.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('eParcela').value=exp.parcela||'';
+  onEditCatChange(exp.subcategory);
+  document.getElementById('editModal').classList.add('active');
+}
+function onEditCatChange(existingSub){
+  var catId=document.getElementById('eCat').value;
+  var cat=CATEGORIES.find(function(c){return c.id===catId;});
+  document.getElementById('eFieldSubcat').style.display='none';
+  document.getElementById('eFieldSubcatLivre').style.display='none';
+  document.getElementById('eFieldParcela').style.display='none';
+  document.getElementById('eFieldSeguroVeiculo').style.display='none';
+  document.getElementById('eFieldFinanciamentoItem').style.display='none';
+  document.getElementById('eFieldReservaSub').style.display='none';document.getElementById('eFieldReservaDesc').style.display='none';
+  if(!cat)return;
+  if(catId==='reserva'){var original=expenses.find(function(e){return e.id===editingId;})||{};document.getElementById('eFieldReservaSub').style.display='flex';document.getElementById('eFieldReservaDesc').style.display='flex';document.getElementById('eReservaSub').value=existingSub||'Reserva livre';document.getElementById('eReservaDesc').value=original.reserveDesc||'';return;}
+  if(catId==='seguro'){
+    document.getElementById('eFieldSeguroVeiculo').style.display='block';
+    selectEditSeguroVeiculo((existingSub||'').toLowerCase()==='carro'?'carro':'moto');
+    return;
+  }
+  if(catId==='financiamento'){
+    document.getElementById('eFieldFinanciamentoItem').style.display='block';
+    var itemFin=(existingSub==='carro'||existingSub==='casa')?existingSub:'moto';
+    selectEditFinanciamentoItem(itemFin);
+    return;
+  }
+  if(cat.sub.length>0){
+    var sel=document.getElementById('eSubcat');sel.innerHTML='';
+    cat.sub.forEach(function(s){var o=document.createElement('option');o.value=s;o.textContent=s;sel.appendChild(o);});
+    if(existingSub)sel.value=existingSub;
+    document.getElementById('eFieldSubcat').style.display='flex';
+  }else if(cat.livre){document.getElementById('eSubcatLivre').value=existingSub||'';document.getElementById('eFieldSubcatLivre').style.display='flex';}
+  if(cat.parcela)document.getElementById('eFieldParcela').style.display='flex';
+}
+function selectEditFinanciamentoItem(v){
+  document.getElementById('eFinanciamentoItem').value=v;
+  document.getElementById('eFinancMotoBtn').classList.toggle('active',v==='moto');
+  document.getElementById('eFinancCarroBtn').classList.toggle('active',v==='carro');
+  document.getElementById('eFinancCasaBtn').classList.toggle('active',v==='casa');
+}
+function selectEditSeguroVeiculo(v){
+  document.getElementById('eSeguroVeiculo').value=v;
+  document.getElementById('eSeguroMotoBtn').classList.toggle('active',v==='moto');
+  document.getElementById('eSeguroCarroBtn').classList.toggle('active',v==='carro');
+}
+function closeEditModal(){editingId=null;document.getElementById('editModal').classList.remove('active');}
+async function saveEdit(){
+  var catId=document.getElementById('eCat').value;
+  var date=document.getElementById('eData').value;
+  var value=parseVal(document.getElementById('eValor').value);
+  var tipo=document.getElementById('eTipo').value;
+  var cat=CATEGORIES.find(function(c){return c.id===catId;});
+  if(!catId||!date||value<=0){alert('Preencha todos os campos.');return;}
+  var sub=null,reserveDesc=null;
+  if(catId==='reserva'){sub=document.getElementById('eReservaSub').value;reserveDesc=document.getElementById('eReservaDesc').value.trim();if(!reserveDesc){alert('Adicione descrição.');return;}}
+  else if(catId==='seguro')sub=document.getElementById('eSeguroVeiculo').value;
+  else if(catId==='financiamento')sub=document.getElementById('eFinanciamentoItem').value;
+  else if(cat.sub.length>0)sub=document.getElementById('eSubcat').value;
+  else if(cat.livre){sub=document.getElementById('eSubcatLivre').value.trim();if(!sub){alert('Adicione descrição.');return;}}
+  var parcela=cat.parcela?document.getElementById('eParcela').value.trim():null;
+  var original=expenses.find(function(e){return e.id===editingId;})||{};var oldWasReserve=original.categoryId==='reserva';var oldPairId=original.reservePairId||original.id;var oldIncome=oldWasReserve?findReserveIncome(oldPairId):null;
+  var updated=Object.assign({},original,{id:editingId,categoryId:catId,subcategory:sub,parcela:parcela,date:date,value:value,type:tipo});
+  if(catId==='reserva'){updated.reserveDesc=reserveDesc;updated.reservePairId=oldWasReserve?oldPairId:updated.id;}else{delete updated.reserveDesc;delete updated.reservePairId;}
+  expenses=expenses.map(function(e){return e.id===editingId?updated:e;});
+  if(oldWasReserve&&catId!=='reserva'&&oldIncome)incomes=incomes.filter(function(i){return i.id!==oldIncome.id;});
+  if(catId==='reserva'){var inc=findReserveIncome(updated.reservePairId);if(!inc){inc=makeReserveIncome(updated);incomes.push(inc);}inc.date=updated.date;inc.value=updated.value;inc.desc=updated.subcategory+' · '+updated.reserveDesc;inc.reservePairId=updated.reservePairId;inc.type='reserva';inc.automatic=true;}
+  saveLocal();closeEditModal();renderResume();renderEntradas();setSyncDot('syncing');
+  try { if(oldWasReserve&&catId!=='reserva'&&oldIncome)await deleteIncomeFromDB(oldIncome.id);await saveExpenseToDB(updated);if(catId==='reserva')await syncReserveIncomeForExpense(updated);setSyncDot('ok'); } catch(e) { setSyncDot('err'); }
+}
+
+// ── EDITAR ENTRADA ────────────────────────────────────────────────────────────
+function openEditIncomeModal(id){
+  var inc=incomes.find(function(e){return e.id===id;});
+  if(!inc)return;
+  if(inc.type==='reserva'&&inc.automatic===true)return;
+  editingIncId=id;setupMask('eIncValor');
+  document.getElementById('eIncTipo').value=inc.type;
+  document.getElementById('eIncData').value=inc.date;
+  document.getElementById('eIncValor').value=inc.value.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('eIncDesc').value=inc.desc||'';
+  document.getElementById('eIncFieldDesc').style.display=inc.type==='outro'?'flex':'none';
+  document.getElementById('editIncomeModal').classList.add('active');
+}
+function onEditIncTipoChange(){document.getElementById('eIncFieldDesc').style.display=document.getElementById('eIncTipo').value==='outro'?'flex':'none';}
+function closeEditIncomeModal(){editingIncId=null;document.getElementById('editIncomeModal').classList.remove('active');}
+async function saveIncomeEdit(){
+  var tipo=document.getElementById('eIncTipo').value;
+  var date=document.getElementById('eIncData').value;
+  var value=parseVal(document.getElementById('eIncValor').value);
+  var desc=tipo==='outro'?document.getElementById('eIncDesc').value.trim():'';
+  if(!date||value<=0){alert('Preencha todos os campos.');return;}
+  var updated={id:editingIncId,type:tipo,date:date,value:value,desc:desc};
+  incomes=incomes.map(function(e){return e.id===editingIncId?updated:e;});
+  saveLocal();closeEditIncomeModal();renderEntradas();renderResume();
+  setSyncDot('syncing');
+  try { await saveIncomeToDB(updated); setSyncDot('ok'); } catch(e) { setSyncDot('err'); }
+}
+
+// ── ENTRADAS ──────────────────────────────────────────────────────────────────
+function renderEntradas(){
+  var key=monthKey();
+  var inc=incomes.filter(function(e){return e.date.startsWith(key);});
+  var list=document.getElementById('incomeList');list.innerHTML='';
+  if(!inc.length){list.innerHTML='<div style="text-align:center;color:var(--muted2);font-size:13px;padding:20px">Nenhuma entrada neste mês</div>';return;}
+  INCOME_TYPES.forEach(function(itype){
+    var items=inc.filter(function(e){return e.type===itype.id;});
+    if(!items.length)return;
+    var total=items.reduce(function(s,e){return s+e.value;},0);
+    var block=document.createElement('div');block.className='income-item';
+    var hdr=document.createElement('div');hdr.className='income-item-header';
+    hdr.innerHTML='<span class="income-emoji">'+itype.emoji+'</span><span class="income-name">'+itype.name+'</span><span class="income-total">'+fBRL(total)+'</span><span class="income-chevron">▼</span>';
+    hdr.onclick=function(){block.classList.toggle('open');};
+    var det=document.createElement('div');det.className='income-details';
+    items.forEach(function(e){
+      det.innerHTML+='<div class="income-entry"><span class="income-entry-date">'+fDate(e.date)+'</span>'+(e.desc?'<span class="income-entry-desc">'+e.desc+'</span>':'')+
+        '<span class="income-entry-value">'+fBRL(e.value)+'</span>'+
+        (e.type==='reserva'&&e.automatic===true?'<span class="entry-meta">Automática</span>':'<button class="btn-edit-entry" onclick="openEditIncomeModal('+e.id+')">✏️</button><button class="btn-del" onclick="deleteEntrada('+e.id+')">✕</button>')+'</div>';
+    });
+    block.appendChild(hdr);block.appendChild(det);list.appendChild(block);
+  });
+}
+
+// ── ANUAL ─────────────────────────────────────────────────────────────────────
+function renderAnual(){
+  document.getElementById('annualYearLabel').textContent=annualYear;
+  var allExp=expenses.filter(function(e){return e.date.startsWith(annualYear+'-');});
+  var allInc=incomes.filter(function(e){return e.date.startsWith(annualYear+'-');});
+  var table=document.getElementById('annualTable');table.innerHTML='';
+  var thead=document.createElement('thead');var hrow=document.createElement('tr');
+  var th0=document.createElement('th');th0.textContent='';hrow.appendChild(th0);
+  for(var m=0;m<12;m++){var th=document.createElement('th');th.textContent=MONTH_SHORT[m];hrow.appendChild(th);}
+  var thT=document.createElement('th');thT.textContent='Total';hrow.appendChild(thT);
+  thead.appendChild(hrow);table.appendChild(thead);
+  var tbody=document.createElement('tbody');
+  var divG=document.createElement('tr');divG.className='div-row';var tdG=document.createElement('td');tdG.colSpan=14;tdG.textContent='Gastos';divG.appendChild(tdG);tbody.appendChild(divG);
+  CATEGORIES.forEach(function(cat){
+    var tr=document.createElement('tr');var td0=document.createElement('td');td0.textContent=cat.emoji+' '+cat.name;tr.appendChild(td0);
+    var rt=0;
+    for(var m=0;m<12;m++){var mk=annualYear+'-'+String(m+1).padStart(2,'0');var v=allExp.filter(function(e){
+      return e.categoryId===cat.id&&e.date.startsWith(mk);
+    }).reduce(function(s,e){return s+e.value;},0);rt+=v;var td=document.createElement('td');td.textContent=v>0?fBRL(v):'—';if(v>0)td.className='has-val';tr.appendChild(td);}
+    var tdT=document.createElement('td');tdT.textContent=rt>0?fBRL(rt):'—';if(rt>0)tdT.className='has-val';tr.appendChild(tdT);tbody.appendChild(tr);
+  });
+  var trTG=document.createElement('tr');trTG.className='tot-row';var tTG0=document.createElement('td');tTG0.textContent='Total gastos';trTG.appendChild(tTG0);
+  var gG=0;for(var m=0;m<12;m++){var mk=annualYear+'-'+String(m+1).padStart(2,'0');var v=allExp.filter(function(e){return e.date.startsWith(mk);}).reduce(function(s,e){return s+e.value;},0);gG+=v;var td=document.createElement('td');td.textContent=v>0?fBRL(v):'—';if(v>0)td.className='has-val';trTG.appendChild(td);}
+  var tGT=document.createElement('td');tGT.textContent=fBRL(gG);tGT.className='has-val';trTG.appendChild(tGT);tbody.appendChild(trTG);
+  var divE=document.createElement('tr');divE.className='div-row';var tdE=document.createElement('td');tdE.colSpan=14;tdE.textContent='Entradas';divE.appendChild(tdE);tbody.appendChild(divE);
+  INCOME_TYPES.forEach(function(itype){
+    var tr=document.createElement('tr');tr.className='income-row';var td0=document.createElement('td');td0.textContent=itype.emoji+' '+itype.name;tr.appendChild(td0);
+    var rt=0;for(var m=0;m<12;m++){var mk=annualYear+'-'+String(m+1).padStart(2,'0');var v=allInc.filter(function(e){return e.type===itype.id&&e.date.startsWith(mk);}).reduce(function(s,e){return s+e.value;},0);rt+=v;var td=document.createElement('td');td.textContent=v>0?fBRL(v):'—';if(v>0)td.className='inc-val';tr.appendChild(td);}
+    var tdT=document.createElement('td');tdT.textContent=rt>0?fBRL(rt):'—';if(rt>0)tdT.className='inc-val';tr.appendChild(tdT);tbody.appendChild(tr);
+  });
+  var trTE=document.createElement('tr');trTE.className='tot-row';var tTE0=document.createElement('td');tTE0.textContent='Total entradas';trTE.appendChild(tTE0);
+  var gE=0;for(var m=0;m<12;m++){var mk=annualYear+'-'+String(m+1).padStart(2,'0');var v=allInc.filter(function(e){return e.date.startsWith(mk);}).reduce(function(s,e){return s+e.value;},0);gE+=v;var td=document.createElement('td');td.textContent=v>0?fBRL(v):'—';if(v>0)td.className='inc-val';trTE.appendChild(td);}
+  var tET=document.createElement('td');tET.textContent=fBRL(gE);tET.className='inc-val';trTE.appendChild(tET);tbody.appendChild(trTE);
+  var trS=document.createElement('tr');trS.className='saldo-row';var tS0=document.createElement('td');tS0.textContent='Saldo';trS.appendChild(tS0);
+  var gS=0;for(var m=0;m<12;m++){var mk=annualYear+'-'+String(m+1).padStart(2,'0');var vG=allExp.filter(function(e){return e.date.startsWith(mk);}).reduce(function(s,e){return s+e.value;},0);var vE=allInc.filter(function(e){return e.date.startsWith(mk);}).reduce(function(s,e){return s+e.value;},0);var s=vE-vG;gS+=s;var td=document.createElement('td');td.textContent=fBRL(s);td.className=s>=0?'pos':'neg';trS.appendChild(td);}
+  var tST=document.createElement('td');tST.textContent=fBRL(gS);tST.className=gS>=0?'pos':'neg';trS.appendChild(tST);tbody.appendChild(trS);
+  table.appendChild(tbody);
+}
+
+
+// Fecha qualquer modal ao tocar/clicar somente no backdrop escuro.
+document.addEventListener('click',function(ev){
+  var modal=ev.target.closest('.modal');
+  if(!modal||ev.target!==modal||!modal.classList.contains('active'))return;
+  var closeMap={editModal:closeEditModal,editIncomeModal:closeEditIncomeModal,projectedExpenseModal:closeProjectedExpenseModal,plannedSubcategoryModal:closePlannedSubcategoryModal,plannedSimpleModal:closePlannedSimpleModal,plannedFreeModal:closePlannedFreeModal,importModal:closeImportModal};
+  if(closeMap[modal.id])closeMap[modal.id]();else modal.classList.remove('active');
+});
+
+// ── EXPORT/IMPORT ─────────────────────────────────────────────────────────────
+function exportData(){
+  var blob=new Blob([JSON.stringify({expenses:expenses,incomes:incomes},null,2)],{type:'application/json'});
+  var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download='controle_'+new Date().toISOString().split('T')[0]+'.json';a.click();URL.revokeObjectURL(url);
+}
+function openImportModal(){document.getElementById('importModal').classList.add('active');}
+function closeImportModal(){document.getElementById('importModal').classList.remove('active');}
+async function importData(){
+  var file=document.getElementById('importFile').files[0];
+  if(!file){alert('Selecione um arquivo');return;}
+  var reader=new FileReader();
+  reader.onload=async function(ev){
+    try{
+      var d=JSON.parse(ev.target.result);
+      var exps=Array.isArray(d)?d:(d.expenses||[]);
+      var incs=d.incomes||[];
+      expenses=exps;incomes=incs;
+      saveLocal();closeImportModal();renderResume();renderEntradas();
+      setSyncDot('syncing');
+      for(var i=0;i<exps.length;i++) await saveExpenseToDB(exps[i]);
+      for(var i=0;i<incs.length;i++) await saveIncomeToDB(incs[i]);
+      setSyncDot('ok');
+      alert('Importado e sincronizado!');
+    }catch(err){alert('Erro: '+err.message);}
+  };
+  reader.readAsText(file);
+}
+</script>
+</body>
+</html>
